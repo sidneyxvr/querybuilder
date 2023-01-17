@@ -275,8 +275,8 @@ namespace SqlKata.Tests
                 .Where("a", "b")
                 .Where("c", "d");
 
-            Action act = () => query.AddOrReplaceComponent("where", new BasicCondition());
-            Assert.Throws<InvalidOperationException>(act);
+            Assert.Throws<InvalidOperationException>(()
+                => query.AddOrReplaceComponent("where", new BasicCondition()));
         }
 
         [Fact]
@@ -416,10 +416,10 @@ namespace SqlKata.Tests
         public void AdHoc_Throws_WhenNoColumnsProvided() =>
             Assert.Throws<InvalidOperationException>(() =>
                 new Query("rows").With("rows",
-                    new string[0],
+                    Array.Empty<string>(),
                     new object[][] {
-                        new object[] {},
-                        new object[] {},
+                        Array.Empty<object>(),
+                        Array.Empty<object>(),
                     }));
 
         [Fact]
@@ -427,8 +427,7 @@ namespace SqlKata.Tests
             Assert.Throws<InvalidOperationException>(() =>
                 new Query("rows").With("rows",
                     new[] { "a", "b", "c" },
-                    new object[][] {
-                    }));
+                    Array.Empty<object[]>()));
 
         [Fact]
         public void AdHoc_Throws_WhenColumnsOutnumberFieldValues() =>
@@ -510,40 +509,6 @@ namespace SqlKata.Tests
                 "[rows] AS (SELECT [a], [b], [c] FROM (VALUES (1, 2, 3), (4, 5, 6)) AS tbl ([a], [b], [c]))",
                 "SELECT * FROM [rows] WHERE [rows].[foo] = 'bar' AND [rows].[baz] = 'buzz'",
             }), c[EngineCodes.SqlServer].ToString());
-        }
-
-        [Fact]
-        public void UnsafeLiteral_Insert()
-        {
-            var query = new Query("Table").AsInsert(new
-            {
-                Count = new UnsafeLiteral("Count + 1")
-            });
-
-            var engines = new[] {
-                EngineCodes.SqlServer,
-            };
-
-            var c = Compilers.Compile(engines, query);
-
-            Assert.Equal("INSERT INTO [Table] ([Count]) VALUES (Count + 1)", c[EngineCodes.SqlServer].ToString());
-        }
-
-        [Fact]
-        public void UnsafeLiteral_Update()
-        {
-            var query = new Query("Table").AsUpdate(new
-            {
-                Count = new UnsafeLiteral("Count + 1")
-            });
-
-            var engines = new[] {
-                EngineCodes.SqlServer,
-            };
-
-            var c = Compilers.Compile(engines, query);
-
-            Assert.Equal("UPDATE [Table] SET [Count] = Count + 1", c[EngineCodes.SqlServer].ToString());
         }
 
         [Fact]

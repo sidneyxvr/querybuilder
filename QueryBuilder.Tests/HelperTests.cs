@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Linq;
 using Xunit;
@@ -152,7 +153,7 @@ namespace SqlKata.Tests
             var objects = new object[]
             {
                 1,
-                new object[] {},
+                Array.Empty<object>(),
                 new object[]
                 {
                     2,

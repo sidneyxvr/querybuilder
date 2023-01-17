@@ -1,19 +1,16 @@
-namespace SqlKata
-{
-    public class IncrementClause : InsertClause
-    {
-        public string Column { get; set; }
-        public int Value { get; set; } = 1;
+namespace SqlKata;
 
-        public override AbstractClause Clone()
+public class IncrementClause : InsertClause
+{
+    public string Column { get; set; }
+    public int Value { get; set; } = 1;
+
+    public override AbstractClause Clone()
+        => new IncrementClause
         {
-            return new IncrementClause
-            {
-                Engine = Engine,
-                Component = Component,
-                Column = Column,
-                Value = Value
-            };
-        }
-    }
+            Engine = Engine,
+            Component = Component,
+            Column = Column,
+            Value = Value
+        };
 }

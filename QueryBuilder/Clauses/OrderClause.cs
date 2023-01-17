@@ -1,55 +1,48 @@
-namespace SqlKata
+namespace SqlKata;
+
+public abstract class AbstractOrderBy : AbstractClause
 {
-    public abstract class AbstractOrderBy : AbstractClause
-    {
 
-    }
+}
 
-    public class OrderBy : AbstractOrderBy
-    {
-        public string Column { get; set; }
-        public bool Ascending { get; set; } = true;
+public class OrderBy : AbstractOrderBy
+{
+    public string Column { get; set; }
+    public bool Ascending { get; set; } = true;
 
-        /// <inheritdoc />
-        public override AbstractClause Clone()
+    /// <inheritdoc />
+    public override AbstractClause Clone()
+        => new OrderBy
         {
-            return new OrderBy
-            {
-                Engine = Engine,
-                Component = Component,
-                Column = Column,
-                Ascending = Ascending
-            };
-        }
-    }
+            Engine = Engine,
+            Component = Component,
+            Column = Column,
+            Ascending = Ascending
+        };
+}
 
-    public class RawOrderBy : AbstractOrderBy
-    {
-        public string Expression { get; set; }
-        public object[] Bindings { set; get; }
+public class RawOrderBy : AbstractOrderBy
+{
+    public string Expression { get; set; }
+    public object[] Bindings { set; get; }
 
-        /// <inheritdoc />
-        public override AbstractClause Clone()
+    /// <inheritdoc />
+    public override AbstractClause Clone()
+        => new RawOrderBy
         {
-            return new RawOrderBy
-            {
-                Engine = Engine,
-                Component = Component,
-                Expression = Expression,
-                Bindings = Bindings,
-            };
-        }
-    }
+            Engine = Engine,
+            Component = Component,
+            Expression = Expression,
+            Bindings = Bindings
+        };
+}
 
-    public class OrderByRandom : AbstractOrderBy
-    {
-        /// <inheritdoc />
-        public override AbstractClause Clone()
+public class OrderByRandom : AbstractOrderBy
+{
+    /// <inheritdoc />
+    public override AbstractClause Clone()
+        => new OrderByRandom
         {
-            return new OrderByRandom
-            {
-                Engine = Engine,
-            };
-        }
-    }
+            Engine = Engine,
+        };
 }

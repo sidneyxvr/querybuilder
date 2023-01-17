@@ -1,50 +1,43 @@
-using System;
+namespace SqlKata;
 
-namespace SqlKata
+public abstract class AbstractJoin : AbstractClause
 {
-    public abstract class AbstractJoin : AbstractClause
-    {
 
-    }
+}
 
-    public class BaseJoin : AbstractJoin
-    {
-        public Join Join { get; set; }
+public class BaseJoin : AbstractJoin
+{
+    public Join Join { get; set; }
 
-        public override AbstractClause Clone()
+    public override AbstractClause Clone()
+        => new BaseJoin
         {
-            return new BaseJoin
-            {
-                Engine = Engine,
-                Join = Join.Clone(),
-                Component = Component,
-            };
-        }
-    }
+            Engine = Engine,
+            Join = Join.Clone(),
+            Component = Component,
+        };
+}
 
-    public class DeepJoin : AbstractJoin
-    {
-        public string Type { get; set; }
-        public string Expression { get; set; }
-        public string SourceKeySuffix { get; set; }
-        public string TargetKey { get; set; }
-        public Func<string, string> SourceKeyGenerator { get; set; }
-        public Func<string, string> TargetKeyGenerator { get; set; }
+public class DeepJoin : AbstractJoin
+{
+    public string Type { get; set; }
+    public string Expression { get; set; }
+    public string SourceKeySuffix { get; set; }
+    public string TargetKey { get; set; }
+    public Func<string, string> SourceKeyGenerator { get; set; }
+    public Func<string, string> TargetKeyGenerator { get; set; }
 
-        /// <inheritdoc />
-        public override AbstractClause Clone()
+    /// <inheritdoc />
+    public override AbstractClause Clone()
+        => new DeepJoin
         {
-            return new DeepJoin
-            {
-                Engine = Engine,
-                Component = Component,
-                Type = Type,
-                Expression = Expression,
-                SourceKeySuffix = SourceKeySuffix,
-                TargetKey = TargetKey,
-                SourceKeyGenerator = SourceKeyGenerator,
-                TargetKeyGenerator = TargetKeyGenerator,
-            };
-        }
-    }
+            Engine = Engine,
+            Component = Component,
+            Type = Type,
+            Expression = Expression,
+            SourceKeySuffix = SourceKeySuffix,
+            TargetKey = TargetKey,
+            SourceKeyGenerator = SourceKeyGenerator,
+            TargetKeyGenerator = TargetKeyGenerator,
+        };
 }

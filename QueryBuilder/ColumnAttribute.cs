@@ -1,34 +1,27 @@
-using System;
+namespace SqlKata;
 
-namespace SqlKata
+/// <summary>
+/// This class is used as metadata on a property to generate different name in the output query.
+/// </summary>
+public class ColumnAttribute : Attribute
 {
-    /// <summary>
-    /// This class is used as metadata on a property to generate different name in the output query.
-    /// </summary>
-    public class ColumnAttribute : Attribute
+    public string Name { get; private set; }
+    public ColumnAttribute(string name)
     {
-        public string Name { get; private set; }
-        public ColumnAttribute(string name)
-        {
-            if (string.IsNullOrEmpty(name))
-            {
-                throw new ArgumentNullException(nameof(name));
-            }
+        ArgumentException.ThrowIfNullOrEmpty(name);
 
-            Name = name;
-        }
+        Name = name;
     }
+}
 
-    /// <summary>
-    /// This class is used as metadata on a property to determine if it is a primary key
-    /// </summary>
-    public class KeyAttribute : ColumnAttribute
+/// <summary>
+/// This class is used as metadata on a property to determine if it is a primary key
+/// </summary>
+public class KeyAttribute : ColumnAttribute
+{
+    public KeyAttribute([System.Runtime.CompilerServices.CallerMemberName] string name = "")
+    : base(name)
     {
-        public KeyAttribute([System.Runtime.CompilerServices.CallerMemberName] string name = "")
-        : base(name)
-        {
-
-        }
 
     }
 }

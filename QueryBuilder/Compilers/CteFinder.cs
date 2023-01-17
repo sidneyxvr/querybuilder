@@ -1,56 +1,53 @@
-using System.Collections.Generic;
+namespace SqlKata.Compilers;
 
-namespace SqlKata.Compilers
+public class CteFinder
 {
-    public class CteFinder
+    private readonly Query _query;
+    private readonly string _engineCode;
+    private HashSet<string>? _namesOfPreviousCtes;
+    private List<AbstractFrom> _orderedCteList;
+
+    public CteFinder(Query query, string engineCode)
     {
-        private readonly Query query;
-        private readonly string engineCode;
-        private HashSet<string> namesOfPreviousCtes;
-        private List<AbstractFrom> orderedCteList;
+        _query = query;
+        _engineCode = engineCode;
+    }
 
-        public CteFinder(Query query, string engineCode)
+    public List<AbstractFrom> Find()
+    {
+        if (null != _orderedCteList)
+            return _orderedCteList;
+
+        _namesOfPreviousCtes = new();
+
+        _orderedCteList = FindInternal(_query);
+
+        _namesOfPreviousCtes.Clear();
+        _namesOfPreviousCtes = null;
+
+        return _orderedCteList;
+    }
+
+    private List<AbstractFrom> FindInternal(Query queryToSearch)
+    {
+        var cteList = queryToSearch.GetComponents<AbstractFrom>("cte", _engineCode);
+
+        var resultList = new List<AbstractFrom>();
+
+        foreach (var cte in cteList)
         {
-            this.query = query;
-            this.engineCode = engineCode;
-        }
+            if (_namesOfPreviousCtes!.Contains(cte.Alias))
+                continue;
 
-        public List<AbstractFrom> Find()
-        {
-            if (null != orderedCteList)
-                return orderedCteList;
+            _namesOfPreviousCtes.Add(cte.Alias);
+            resultList.Add(cte);
 
-            namesOfPreviousCtes = new HashSet<string>();
-
-            orderedCteList = findInternal(query);
-
-            namesOfPreviousCtes.Clear();
-            namesOfPreviousCtes = null;
-
-            return orderedCteList;
-        }
-
-        private List<AbstractFrom> findInternal(Query queryToSearch)
-        {
-            var cteList = queryToSearch.GetComponents<AbstractFrom>("cte", engineCode);
-
-            var resultList = new List<AbstractFrom>();
-
-            foreach (var cte in cteList)
+            if (cte is QueryFromClause queryFromClause)
             {
-                if (namesOfPreviousCtes.Contains(cte.Alias))
-                    continue;
-
-                namesOfPreviousCtes.Add(cte.Alias);
-                resultList.Add(cte);
-
-                if (cte is QueryFromClause queryFromClause)
-                {
-                    resultList.InsertRange(0, findInternal(queryFromClause.Query));
-                }
+                resultList.InsertRange(0, FindInternal(queryFromClause.Query));
             }
-
-            return resultList;
         }
+
+        return resultList;
     }
 }

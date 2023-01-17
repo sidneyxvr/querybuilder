@@ -1,119 +1,102 @@
-using System;
-using System.Collections.Generic;
+namespace SqlKata;
 
-namespace SqlKata
+public abstract class AbstractFrom : AbstractClause
 {
-    public abstract class AbstractFrom : AbstractClause
-    {
-        protected string _alias;
-
-        /// <summary>
-        /// Try to extract the Alias for the current clause.
-        /// </summary>
-        /// <returns></returns>
-        public virtual string Alias { get => _alias; set => _alias = value; }
-    }
+    protected string? _alias;
 
     /// <summary>
-    /// Represents a "from" clause.
+    /// Try to extract the Alias for the current clause.
     /// </summary>
-    public class FromClause : AbstractFrom
+    /// <returns></returns>
+    public virtual string? Alias { get => _alias; set => _alias = value; }
+}
+
+/// <summary>
+/// Represents a "from" clause.
+/// </summary>
+public class FromClause : AbstractFrom
+{
+    public string Table { get; set; }
+
+    public override string? Alias
     {
-        public string Table { get; set; }
-
-        public override string Alias
+        get
         {
-            get
+            if (Table.IndexOf(" as ", StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                if (Table.IndexOf(" as ", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    var segments = Table.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                var segments = Table.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                    return segments[2];
-                }
-
-                return Table;
+                return segments[2];
             }
-        }
 
-        /// <inheritdoc />
-        public override AbstractClause Clone()
-        {
-            return new FromClause
-            {
-                Engine = Engine,
-                Alias = Alias,
-                Table = Table,
-                Component = Component,
-            };
+            return Table;
         }
     }
 
-    /// <summary>
-    /// Represents a "from subquery" clause.
-    /// </summary>
-    public class QueryFromClause : AbstractFrom
-    {
-        public Query Query { get; set; }
-
-        public override string Alias
+    /// <inheritdoc />
+    public override AbstractClause Clone()
+        => new FromClause
         {
-            get
-            {
-                return string.IsNullOrEmpty(_alias) ? Query.QueryAlias : _alias;
-            }
-        }
+            Engine = Engine,
+            Alias = Alias,
+            Table = Table,
+            Component = Component,
+        };
+}
 
-        /// <inheritdoc />
-        public override AbstractClause Clone()
+/// <summary>
+/// Represents a "from subquery" clause.
+/// </summary>
+public class QueryFromClause : AbstractFrom
+{
+    public Query Query { get; set; }
+
+    public override string Alias
+        => string.IsNullOrEmpty(_alias) ? Query.QueryAlias : _alias;
+
+    /// <inheritdoc />
+    public override AbstractClause Clone()
+        => new QueryFromClause
         {
-            return new QueryFromClause
-            {
-                Engine = Engine,
-                Alias = Alias,
-                Query = Query.Clone(),
-                Component = Component,
-            };
-        }
-    }
+            Engine = Engine,
+            Alias = Alias,
+            Query = Query.Clone(),
+            Component = Component
+        };
+}
 
-    public class RawFromClause : AbstractFrom
-    {
-        public string Expression { get; set; }
-        public object[] Bindings { set; get; }
+public class RawFromClause : AbstractFrom
+{
+    public string Expression { get; set; }
+    public object[] Bindings { set; get; }
 
-        /// <inheritdoc />
-        public override AbstractClause Clone()
+    /// <inheritdoc />
+    public override AbstractClause Clone()
+        => new RawFromClause
         {
-            return new RawFromClause
-            {
-                Engine = Engine,
-                Alias = Alias,
-                Expression = Expression,
-                Bindings = Bindings,
-                Component = Component,
-            };
-        }
-    }
+            Engine = Engine,
+            Alias = Alias,
+            Expression = Expression,
+            Bindings = Bindings,
+            Component = Component,
+        };
+}
 
-    /// <summary>
-    /// Represents a FROM clause that is an ad-hoc table built with predefined values.
-    /// </summary>
-    public class AdHocTableFromClause : AbstractFrom
-    {
-        public List<string> Columns { get; set; }
-        public List<object> Values { get; set; }
+/// <summary>
+/// Represents a FROM clause that is an ad-hoc table built with predefined values.
+/// </summary>
+public class AdHocTableFromClause : AbstractFrom
+{
+    public List<string> Columns { get; set; }
+    public List<object> Values { get; set; }
 
-        public override AbstractClause Clone()
+    public override AbstractClause Clone()
+        => new AdHocTableFromClause
         {
-            return new AdHocTableFromClause
-            {
-                Engine = Engine,
-                Alias = Alias,
-                Columns = Columns,
-                Values = Values,
-                Component = Component,
-            };
-        }
-    }
+            Engine = Engine,
+            Alias = Alias,
+            Columns = Columns,
+            Values = Values,
+            Component = Component
+        };
 }
