@@ -1,3 +1,5 @@
+using QueryBuilder.Clauses;
+
 namespace SqlKata;
 
 public class Join : BaseQuery<Join>
@@ -44,7 +46,7 @@ public class Join : BaseQuery<Join>
     public Join AsCross() => AsType("cross join");
 
     public Join On(string first, string second, string op = "=")
-        => AddComponent("where", new TwoColumnsCondition
+        => AddComponent(Component.Where, new TwoColumnsCondition
         {
             First = first,
             Second = second,

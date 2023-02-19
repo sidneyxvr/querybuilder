@@ -1,3 +1,4 @@
+using QueryBuilder.Clauses;
 using SqlKata.Compilers;
 using SqlKata.Extensions;
 using SqlKata.Tests.Infrastructure;
@@ -245,7 +246,7 @@ namespace SqlKata.Tests
             var query = new Query();
             if (table != null)
                 query.From(table);
-            query.AddOrReplaceComponent("from", new FromClause() { Table = "updated", Engine = engine });
+            query.AddOrReplaceComponent(Component.From, new FromClause() { Table = "updated", Engine = engine });
             var froms = query.Clauses.OfType<FromClause>();
 
             Assert.Single(froms);
@@ -262,7 +263,7 @@ namespace SqlKata.Tests
                 .Where("generic", "foo")
                 .ForSqlServer(q => q.Where("mssql", "foo"));
 
-            var where = query.GetOneComponent("where", engine) as BasicCondition;
+            var where = query.GetOneComponent(Component.Where, engine) as BasicCondition;
 
             Assert.NotNull(where);
             Assert.Equal(column, where.Column);
@@ -276,7 +277,13 @@ namespace SqlKata.Tests
                 .Where("c", "d");
 
             Assert.Throws<InvalidOperationException>(()
-                => query.AddOrReplaceComponent("where", new BasicCondition()));
+                => query.AddOrReplaceComponent(Component.Where,
+                new BasicCondition
+                {
+                    Column = null,
+                    Operator = null,
+                    Value = null
+                }));
         }
 
         [Fact]
@@ -286,7 +293,7 @@ namespace SqlKata.Tests
                 .ForSqlServer(q => q.Limit(5))
                 .ForSqlServer(q => q.Limit(10));
 
-            var limits = query.GetComponents<LimitClause>("limit", EngineCodes.SqlServer);
+            var limits = query.GetComponents<LimitClause>(Component.Limit, EngineCodes.SqlServer);
             Assert.Single(limits);
             Assert.Equal(10, limits.Single().Limit);
         }
@@ -301,7 +308,7 @@ namespace SqlKata.Tests
             var engines = new[] { EngineCodes.SqlServer, EngineCodes.MySql, EngineCodes.PostgreSql };
             var c = Compilers.Compile(engines, query);
 
-            Assert.Equal(2, query.GetComponents("limit").Count);
+            Assert.Equal(2, query.GetComponents(Component.Limit).Count);
             Assert.Equal("SELECT TOP (5) * FROM [mytable]", c[EngineCodes.SqlServer].ToString());
             Assert.Equal("SELECT * FROM \"mytable\" LIMIT 10", c[EngineCodes.PostgreSql].ToString());
             Assert.Equal("SELECT * FROM `mytable`", c[EngineCodes.MySql].ToString());
@@ -314,7 +321,7 @@ namespace SqlKata.Tests
                 .ForSqlServer(q => q.Offset(5))
                 .ForSqlServer(q => q.Offset(10));
 
-            var limits = query.GetComponents<OffsetClause>("offset", EngineCodes.SqlServer);
+            var limits = query.GetComponents<OffsetClause>(Component.Offset, EngineCodes.SqlServer);
             Assert.Single(limits);
             Assert.Equal(10, limits.Single().Offset);
         }
@@ -329,7 +336,7 @@ namespace SqlKata.Tests
             var engines = new[] { EngineCodes.SqlServer, EngineCodes.MySql, EngineCodes.PostgreSql };
             var c = Compilers.Compile(engines, query);
 
-            Assert.Equal(2, query.GetComponents("offset").Count);
+            Assert.Equal(2, query.GetComponents(Component.Offset).Count);
             Assert.Equal("SELECT * FROM `mytable` LIMIT 18446744073709551615 OFFSET 5", c[EngineCodes.MySql].ToString());
             Assert.Equal("SELECT * FROM \"mytable\" OFFSET 10", c[EngineCodes.PostgreSql].ToString());
             Assert.Equal("SELECT * FROM [mytable]", c[EngineCodes.SqlServer].ToString());

@@ -1,3 +1,5 @@
+using QueryBuilder.Clauses;
+using QueryBuilder.Exceptions;
 using System.Collections.Concurrent;
 using System.Reflection;
 
@@ -7,10 +9,9 @@ public partial class Query : BaseQuery<Query>
 {
     private string? _comment;
 
-    public bool IsDistinct { get; set; } = false;
+    public bool IsDistinct { get; set; }
     public string? QueryAlias { get; set; }
     public string Method { get; set; } = "select";
-    public List<Include> Includes = new();
     public Dictionary<string, object> Variables = new();
 
     public Query() : base()
@@ -32,7 +33,7 @@ public partial class Query : BaseQuery<Query>
     internal long GetOffset(string? engineCode = null)
     {
         engineCode ??= EngineScope;
-        var offset = GetOneComponent<OffsetClause>("offset", engineCode);
+        var offset = GetOneComponent<OffsetClause>(Component.Offset, engineCode);
 
         return offset?.Offset ?? 0;
     }
@@ -40,7 +41,7 @@ public partial class Query : BaseQuery<Query>
     internal int GetLimit(string? engineCode = null)
     {
         engineCode ??= EngineScope;
-        var limit = GetOneComponent<LimitClause>("limit", engineCode);
+        var limit = GetOneComponent<LimitClause>(Component.Limit, engineCode);
 
         return limit?.Limit ?? 0;
     }
@@ -52,7 +53,6 @@ public partial class Query : BaseQuery<Query>
         clone.QueryAlias = QueryAlias;
         clone.IsDistinct = IsDistinct;
         clone.Method = Method;
-        clone.Includes = Includes;
         clone.Variables = Variables;
         return clone;
     }
@@ -96,12 +96,14 @@ public partial class Query : BaseQuery<Query>
 
         query = query.Clone();
 
+        CustomNullReferenceException.ThrowIfNull(query.QueryAlias);
+
         var alias = query.QueryAlias.Trim();
 
         // clear the query alias
         query.QueryAlias = null;
 
-        return AddComponent("cte", new QueryFromClause
+        return AddComponent(Component.Cte, new QueryFromClause
         {
             Query = query,
             Alias = alias,
@@ -122,10 +124,14 @@ public partial class Query : BaseQuery<Query>
     /// </summary>
     public Query With(string alias, IEnumerable<string> columns, IEnumerable<IEnumerable<object>> valuesCollection)
     {
-        var columnsList = columns?.ToList();
-        var valuesCollectionList = valuesCollection?.ToList();
+        ArgumentNullException.ThrowIfNull(alias);
+        ArgumentNullException.ThrowIfNull(columns);
+        ArgumentNullException.ThrowIfNull(valuesCollection);
 
-        if ((columnsList?.Count ?? 0) == 0 || (valuesCollectionList?.Count ?? 0) == 0)
+        var columnsList = columns.ToList();
+        var valuesCollectionList = valuesCollection.ToList();
+
+        if (columnsList.Count == 0 || valuesCollectionList.Count == 0)
         {
             throw new InvalidOperationException("Columns and valuesCollection cannot be null or empty");
         }
@@ -148,11 +154,11 @@ public partial class Query : BaseQuery<Query>
             clause.Values.AddRange(valuesList);
         }
 
-        return AddComponent("cte", clause);
+        return AddComponent(Component.Cte, clause);
     }
 
     public Query WithRaw(string alias, string sql, params object[] bindings)
-        => AddComponent("cte", new RawFromClause
+        => AddComponent(Component.Cte, new RawFromClause
         {
             Alias = alias,
             Expression = sql,
@@ -166,7 +172,7 @@ public partial class Query : BaseQuery<Query>
             Limit = value
         };
 
-        return AddOrReplaceComponent("limit", newClause);
+        return AddOrReplaceComponent(Component.Limit, newClause);
     }
 
     public Query Offset(long value)
@@ -176,7 +182,7 @@ public partial class Query : BaseQuery<Query>
             Offset = value
         };
 
-        return AddOrReplaceComponent("offset", newClause);
+        return AddOrReplaceComponent(Component.Offset, newClause);
     }
 
     public Query Offset(int value)
@@ -198,15 +204,6 @@ public partial class Query : BaseQuery<Query>
     public Query Skip(int offset)
         => Offset(offset);
 
-    /// <summary>
-    /// Set the limit and offset for a given page.
-    /// </summary>
-    /// <param name="page"></param>
-    /// <param name="perPage"></param>
-    /// <returns></returns>
-    public Query ForPage(int page, int perPage = 15)
-        => Skip((page - 1) * perPage).Take(perPage);
-
     public Query Distinct()
     {
         IsDistinct = true;
@@ -220,7 +217,7 @@ public partial class Query : BaseQuery<Query>
     /// <param name="whenTrue">Invoked when the condition is true</param>
     /// <param name="whenFalse">Optional, invoked when the condition is false</param>
     /// <returns></returns>
-    public Query When(bool condition, Func<Query, Query> whenTrue, Func<Query, Query> whenFalse = null)
+    public Query When(bool condition, Func<Query, Query> whenTrue, Func<Query, Query>? whenFalse = null)
     {
         if (condition && whenTrue != null)
         {
@@ -248,7 +245,7 @@ public partial class Query : BaseQuery<Query>
     {
         foreach (var column in columns)
         {
-            AddComponent("order", new OrderBy
+            AddComponent(Component.Order, new OrderBy
             {
                 Column = column,
                 Ascending = true
@@ -262,7 +259,7 @@ public partial class Query : BaseQuery<Query>
     {
         foreach (var column in columns)
         {
-            AddComponent("order", new OrderBy
+            AddComponent(Component.Order, new OrderBy
             {
                 Column = column,
                 Ascending = false
@@ -273,7 +270,7 @@ public partial class Query : BaseQuery<Query>
     }
 
     public Query OrderByRaw(string expression, params object[] bindings)
-        => AddComponent("order",
+        => AddComponent(Component.Order,
             new RawOrderBy
             {
                 Expression = expression,
@@ -281,13 +278,13 @@ public partial class Query : BaseQuery<Query>
             });
 
     public Query OrderByRandom()
-        => AddComponent("order", new OrderByRandom { });
+        => AddComponent(Component.Order, new OrderByRandom { });
 
     public Query GroupBy(params string[] columns)
     {
         foreach (var column in columns)
         {
-            AddComponent("group", new Column
+            AddComponent(Component.Group, new Column
             {
                 Name = column
             });
@@ -298,7 +295,7 @@ public partial class Query : BaseQuery<Query>
 
     public Query GroupByRaw(string expression, params object[] bindings)
     {
-        AddComponent("group", new RawColumn
+        AddComponent(Component.Group, new RawColumn
         {
             Expression = expression,
             Bindings = bindings,
@@ -310,24 +307,7 @@ public partial class Query : BaseQuery<Query>
     public override Query NewQuery()
         => new();
 
-    public Query Include(string relationName, Query query, string foreignKey = null, string localKey = "Id", bool isMany = false)
-    {
-        Includes.Add(new Include
-        {
-            Name = relationName,
-            LocalKey = localKey,
-            ForeignKey = foreignKey,
-            Query = query,
-            IsMany = isMany,
-        });
-
-        return this;
-    }
-
-    public Query IncludeMany(string relationName, Query query, string foreignKey = null, string localKey = "Id")
-        => Include(relationName, query, foreignKey, localKey, isMany: true);
-
-    private static readonly ConcurrentDictionary<Type, PropertyInfo[]> CacheDictionaryProperties = new ConcurrentDictionary<Type, PropertyInfo[]>();
+    private static readonly ConcurrentDictionary<Type, PropertyInfo[]> CacheDictionaryProperties = new();
 
     /// <summary>
     /// Define a variable to be used within the query
@@ -351,52 +331,11 @@ public partial class Query : BaseQuery<Query>
             return Variables[variable];
         }
 
-        if (Parent != null)
+        if (Parent is Query parent)
         {
-            return (Parent as Query).FindVariable(variable);
+            return parent.FindVariable(variable);
         }
 
         throw new Exception($"Variable '{variable}' not found");
-    }
-
-    /// <summary>
-    /// Gather a list of key-values representing the properties of the object and their values.
-    /// </summary>
-    /// <param name="data">The plain C# object</param>
-    /// <param name="considerKeys">
-    /// When true it will search for properties with the [Key] attribute
-    /// and will add it automatically to the Where clause
-    /// </param>
-    /// <returns></returns>
-    private IEnumerable<KeyValuePair<string, object>> BuildKeyValuePairsFromObject(object data, bool considerKeys = false)
-    {
-        var dictionary = new Dictionary<string, object>();
-        var props = CacheDictionaryProperties.GetOrAdd(data.GetType(), type => type.GetRuntimeProperties().ToArray());
-
-        foreach (var property in props)
-        {
-            if (property.GetCustomAttribute(typeof(IgnoreAttribute)) != null)
-            {
-                continue;
-            }
-
-            var value = property.GetValue(data);
-
-            var colAttr = property.GetCustomAttribute(typeof(ColumnAttribute)) as ColumnAttribute;
-
-            var name = colAttr?.Name ?? property.Name;
-
-            dictionary.Add(name, value);
-
-            if (considerKeys && colAttr != null)
-            {
-                if ((colAttr as KeyAttribute) != null)
-                {
-                    Where(name, value);
-                }
-            }
-        }
-
-        return dictionary;
     }
 }

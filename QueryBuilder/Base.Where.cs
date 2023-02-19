@@ -1,3 +1,5 @@
+using QueryBuilder.Clauses;
+using QueryBuilder.Exceptions;
 using System.Reflection;
 
 namespace SqlKata;
@@ -24,7 +26,7 @@ public abstract partial class BaseQuery<Q>
             return boolValue ? WhereTrue(column) : WhereFalse(column);
         }
 
-        return AddComponent("where", new BasicCondition
+        return AddComponent(Component.Where, new BasicCondition
         {
             Column = column,
             Operator = op,
@@ -66,7 +68,11 @@ public abstract partial class BaseQuery<Q>
 
         foreach (var item in constraints.GetType().GetRuntimeProperties())
         {
-            dictionary.Add(item.Name, item.GetValue(constraints));
+            var currentItem = item.GetValue(constraints);
+
+            CustomNullReferenceException.ThrowIfNull(currentItem);
+
+            dictionary.Add(item.Name, currentItem);
         }
 
         return Where(dictionary);
@@ -96,7 +102,7 @@ public abstract partial class BaseQuery<Q>
     }
 
     public Q WhereRaw(string sql, params object[] bindings)
-        => AddComponent("where",
+        => AddComponent(Component.Where,
         new RawCondition
         {
             Expression = sql,
@@ -118,12 +124,12 @@ public abstract partial class BaseQuery<Q>
         var query = callback.Invoke(NewChild());
 
         // omit empty queries
-        if (!query.Clauses.Where(x => x.Component == "where").Any())
+        if (!query.Clauses.Where(x => x.Component == Component.Where).Any())
         {
             return (Q)this;
         }
 
-        return AddComponent("where", new NestedCondition<Q>
+        return AddComponent(Component.Where, new NestedCondition<Q>
         {
             Query = query,
             IsNot = GetNot(),
@@ -141,7 +147,7 @@ public abstract partial class BaseQuery<Q>
         => Not().Or().Where(callback);
 
     public Q WhereColumns(string first, string op, string second)
-        => AddComponent("where",
+        => AddComponent(Component.Where,
         new TwoColumnsCondition
         {
             First = first,
@@ -155,7 +161,7 @@ public abstract partial class BaseQuery<Q>
         => Or().WhereColumns(first, op, second);
 
     public Q WhereNull(string column)
-        => AddComponent("where",
+        => AddComponent(Component.Where,
         new NullCondition
         {
             Column = column,
@@ -173,7 +179,7 @@ public abstract partial class BaseQuery<Q>
         => Or().Not().WhereNull(column);
 
     public Q WhereTrue(string column)
-        => AddComponent("where",
+        => AddComponent(Component.Where,
         new BooleanCondition
         {
             Column = column,
@@ -186,7 +192,7 @@ public abstract partial class BaseQuery<Q>
         => Or().WhereTrue(column);
 
     public Q WhereFalse(string column)
-        => AddComponent("where",
+        => AddComponent(Component.Where,
         new BooleanCondition
         {
             Column = column,
@@ -198,8 +204,8 @@ public abstract partial class BaseQuery<Q>
     public Q OrWhereFalse(string column)
         => Or().WhereFalse(column);
 
-    public Q WhereLike(string column, object value, bool caseSensitive = false, string escapeCharacter = null)
-        => AddComponent("where",
+    public Q WhereLike(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
+        => AddComponent(Component.Where,
         new BasicStringCondition
         {
             Operator = "like",
@@ -211,17 +217,17 @@ public abstract partial class BaseQuery<Q>
             IsNot = GetNot(),
         });
 
-    public Q WhereNotLike(string column, object value, bool caseSensitive = false, string escapeCharacter = null)
+    public Q WhereNotLike(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
         => Not().WhereLike(column, value, caseSensitive, escapeCharacter);
 
-    public Q OrWhereLike(string column, object value, bool caseSensitive = false, string escapeCharacter = null)
+    public Q OrWhereLike(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
         => Or().WhereLike(column, value, caseSensitive, escapeCharacter);
 
-    public Q OrWhereNotLike(string column, object value, bool caseSensitive = false, string escapeCharacter = null)
+    public Q OrWhereNotLike(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
         => Or().Not().WhereLike(column, value, caseSensitive, escapeCharacter);
 
-    public Q WhereStarts(string column, object value, bool caseSensitive = false, string escapeCharacter = null)
-        => AddComponent("where",
+    public Q WhereStarts(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
+        => AddComponent(Component.Where,
         new BasicStringCondition
         {
             Operator = "starts",
@@ -233,17 +239,17 @@ public abstract partial class BaseQuery<Q>
             IsNot = GetNot(),
         });
 
-    public Q WhereNotStarts(string column, object value, bool caseSensitive = false, string escapeCharacter = null)
+    public Q WhereNotStarts(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
         => Not().WhereStarts(column, value, caseSensitive, escapeCharacter);
 
-    public Q OrWhereStarts(string column, object value, bool caseSensitive = false, string escapeCharacter = null)
+    public Q OrWhereStarts(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
         => Or().WhereStarts(column, value, caseSensitive, escapeCharacter);
 
-    public Q OrWhereNotStarts(string column, object value, bool caseSensitive = false, string escapeCharacter = null)
+    public Q OrWhereNotStarts(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
         => Or().Not().WhereStarts(column, value, caseSensitive, escapeCharacter);
 
-    public Q WhereEnds(string column, object value, bool caseSensitive = false, string escapeCharacter = null)
-        => AddComponent("where",
+    public Q WhereEnds(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
+        => AddComponent(Component.Where,
         new BasicStringCondition
         {
             Operator = "ends",
@@ -255,17 +261,17 @@ public abstract partial class BaseQuery<Q>
             IsNot = GetNot()
         });
 
-    public Q WhereNotEnds(string column, object value, bool caseSensitive = false, string escapeCharacter = null)
+    public Q WhereNotEnds(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
         => Not().WhereEnds(column, value, caseSensitive, escapeCharacter);
 
-    public Q OrWhereEnds(string column, object value, bool caseSensitive = false, string escapeCharacter = null)
+    public Q OrWhereEnds(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
         => Or().WhereEnds(column, value, caseSensitive, escapeCharacter);
 
-    public Q OrWhereNotEnds(string column, object value, bool caseSensitive = false, string escapeCharacter = null)
+    public Q OrWhereNotEnds(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
         => Or().Not().WhereEnds(column, value, caseSensitive, escapeCharacter);
 
-    public Q WhereContains(string column, object value, bool caseSensitive = false, string escapeCharacter = null)
-        => AddComponent("where",
+    public Q WhereContains(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
+        => AddComponent(Component.Where,
         new BasicStringCondition
         {
             Operator = "contains",
@@ -277,17 +283,18 @@ public abstract partial class BaseQuery<Q>
             IsNot = GetNot()
         });
 
-    public Q WhereNotContains(string column, object value, bool caseSensitive = false, string escapeCharacter = null)
+    public Q WhereNotContains(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
         => Not().WhereContains(column, value, caseSensitive, escapeCharacter);
 
-    public Q OrWhereContains(string column, object value, bool caseSensitive = false, string escapeCharacter = null)
+    public Q OrWhereContains(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
         => Or().WhereContains(column, value, caseSensitive, escapeCharacter);
 
-    public Q OrWhereNotContains(string column, object value, bool caseSensitive = false, string escapeCharacter = null)
+    public Q OrWhereNotContains(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
         => Or().Not().WhereContains(column, value, caseSensitive, escapeCharacter);
 
     public Q WhereBetween<T>(string column, T lower, T higher)
-        => AddComponent("where", new BetweenCondition<T>
+        where T : notnull
+        => AddComponent(Component.Where, new BetweenCondition<T>
         {
             Column = column,
             IsOr = GetOr(),
@@ -297,32 +304,33 @@ public abstract partial class BaseQuery<Q>
         });
 
     public Q OrWhereBetween<T>(string column, T lower, T higher)
+        where T : notnull
         => Or().WhereBetween(column, lower, higher);
 
     public Q WhereNotBetween<T>(string column, T lower, T higher)
+        where T : notnull
         => Not().WhereBetween(column, lower, higher);
 
     public Q OrWhereNotBetween<T>(string column, T lower, T higher)
+        where T : notnull
         => Or().Not().WhereBetween(column, lower, higher);
 
     public Q WhereIn<T>(string column, IEnumerable<T> values)
     {
         // If the developer has passed a string they most likely want a List<string>
         // since string is considered as List<char>
-        if (values is string)
+        if (values is string value)
         {
-            string val = values as string;
-
-            return AddComponent("where", new InCondition<string>
+            return AddComponent(Component.Where, new InCondition<string>
             {
                 Column = column,
                 IsOr = GetOr(),
                 IsNot = GetNot(),
-                Values = new List<string> { val }
+                Values = new List<string> { value }
             });
         }
 
-        return AddComponent("where", new InCondition<T>
+        return AddComponent(Component.Where, new InCondition<T>
         {
             Column = column,
             IsOr = GetOr(),
@@ -341,7 +349,7 @@ public abstract partial class BaseQuery<Q>
         => Or().Not().WhereIn(column, values);
 
     public Q WhereIn(string column, Query query)
-        => AddComponent("where",
+        => AddComponent(Component.Where,
         new InQueryCondition
         {
             Column = column,
@@ -390,7 +398,7 @@ public abstract partial class BaseQuery<Q>
     }
 
     public Q Where(string column, string op, Query query)
-        => AddComponent("where",
+        => AddComponent(Component.Where,
         new QueryCondition<Query>
         {
             Column = column,
@@ -404,7 +412,7 @@ public abstract partial class BaseQuery<Q>
         => WhereSub(query, "=", value);
 
     public Q WhereSub(Query query, string op, object value)
-        => AddComponent("where",
+        => AddComponent(Component.Where,
         new SubQueryCondition<Query>
         {
             Value = value,
@@ -427,12 +435,12 @@ public abstract partial class BaseQuery<Q>
 
     public Q WhereExists(Query query)
     {
-        if (!query.HasComponent("from"))
+        if (!query.HasComponent(Component.From))
         {
             throw new ArgumentException($"'{nameof(FromClause)}' cannot be empty if used inside a '{nameof(WhereExists)}' condition");
         }
 
-        return AddComponent("where", new ExistsCondition
+        return AddComponent(Component.Where, new ExistsCondition
         {
             Query = query,
             IsNot = GetNot(),
@@ -464,16 +472,17 @@ public abstract partial class BaseQuery<Q>
         => Or().Not().WhereExists(callback);
 
     public Q WhereDatePart(string part, string column, string op, object value)
-        => AddComponent("where",
+        => AddComponent(Component.Where,
          new BasicDateCondition
          {
              Operator = op,
              Column = column,
              Value = value,
-             Part = part?.ToLowerInvariant(),
+             Part = part.ToLowerInvariant(),
              IsOr = GetOr(),
              IsNot = GetNot()
          });
+
     public Q WhereNotDatePart(string part, string column, string op, object value)
         => Not().WhereDatePart(part, column, op, value);
 

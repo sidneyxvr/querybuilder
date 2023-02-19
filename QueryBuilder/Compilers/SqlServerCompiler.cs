@@ -1,3 +1,5 @@
+using QueryBuilder.Clauses;
+
 namespace SqlKata.Compilers;
 
 public class SqlServerCompiler : Compiler
@@ -6,7 +8,6 @@ public class SqlServerCompiler : Compiler
     {
         OpeningIdentifier = "[";
         ClosingIdentifier = "]";
-        LastId = "SELECT scope_identity() as Id";
     }
 
     public override string EngineCode { get; } = EngineCodes.SqlServer;
@@ -30,7 +31,7 @@ public class SqlServerCompiler : Compiler
         var offset = query.GetOffset(EngineCode);
 
 
-        if (!query.HasComponent("select"))
+        if (!query.HasComponent(Component.Select))
         {
             query.Select("*");
         }
@@ -39,7 +40,7 @@ public class SqlServerCompiler : Compiler
 
         query.SelectRaw($"ROW_NUMBER() OVER ({order}) AS [row_num]", ctx.Bindings.ToArray());
 
-        query.ClearComponent("order");
+        query.ClearComponent(Component.Order);
 
 
         var result = base.CompileSelectQuery(query);
@@ -79,21 +80,21 @@ public class SqlServerCompiler : Compiler
             // top bindings should be inserted first
             ctx.Bindings.Insert(0, limit);
 
-            ctx.Query.ClearComponent("limit");
+            ctx.Query.ClearComponent(Component.Limit);
 
             // handle distinct
             if (compiled.IndexOf("SELECT DISTINCT") == 0)
             {
-                return $"SELECT DISTINCT TOP ({ParameterPlaceholder}){compiled.Substring(15)}";
+                return $"SELECT DISTINCT TOP ({ParameterPlaceholder}){compiled[15..]}";
             }
 
-            return $"SELECT TOP ({ParameterPlaceholder}){compiled.Substring(6)}";
+            return $"SELECT TOP ({ParameterPlaceholder}){compiled[6..]}";
         }
 
         return compiled;
     }
 
-    public override string CompileLimit(SqlResult ctx)
+    public override string? CompileLimit(SqlResult ctx)
     {
         if (UseLegacyPagination)
         {
@@ -111,7 +112,7 @@ public class SqlServerCompiler : Compiler
         }
 
         var safeOrder = "";
-        if (!ctx.Query.HasComponent("order"))
+        if (!ctx.Query.HasComponent(Component.Order))
         {
             safeOrder = "ORDER BY (SELECT 0) ";
         }

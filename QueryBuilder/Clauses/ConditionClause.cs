@@ -11,9 +11,9 @@ public abstract class AbstractCondition : AbstractClause
 /// </summary>
 public class BasicCondition : AbstractCondition
 {
-    public string Column { get; set; }
-    public string Operator { get; set; }
-    public virtual object Value { get; set; }
+    public required string Column { get; set; }
+    public required string Operator { get; set; }
+    public virtual required object Value { get; set; }
 
     /// <inheritdoc />
     public override AbstractClause Clone()
@@ -65,7 +65,7 @@ public class BasicStringCondition : BasicCondition
 
 public class BasicDateCondition : BasicCondition
 {
-    public string Part { get; set; }
+    public required string Part { get; set; }
 
     /// <inheritdoc />
     public override AbstractClause Clone()
@@ -87,9 +87,9 @@ public class BasicDateCondition : BasicCondition
 /// </summary>
 public class TwoColumnsCondition : AbstractCondition
 {
-    public string First { get; set; }
-    public string Operator { get; set; }
-    public string Second { get; set; }
+    public required string First { get; set; }
+    public required string Operator { get; set; }
+    public required string Second { get; set; }
 
     /// <inheritdoc />
     public override AbstractClause Clone()
@@ -110,9 +110,9 @@ public class TwoColumnsCondition : AbstractCondition
 /// </summary>
 public class QueryCondition<T> : AbstractCondition where T : BaseQuery<T>
 {
-    public string Column { get; set; }
-    public string Operator { get; set; }
-    public Query Query { get; set; }
+    public required string Column { get; set; }
+    public required string Operator { get; set; }
+    public required Query Query { get; set; }
 
     /// <inheritdoc />
     public override AbstractClause Clone()
@@ -133,9 +133,9 @@ public class QueryCondition<T> : AbstractCondition where T : BaseQuery<T>
 /// </summary>
 public class SubQueryCondition<T> : AbstractCondition where T : BaseQuery<T>
 {
-    public object Value { get; set; }
-    public string Operator { get; set; }
-    public Query Query { get; set; }
+    public required object Value { get; set; }
+    public required string Operator { get; set; }
+    public required Query Query { get; set; }
 
     /// <inheritdoc />
     public override AbstractClause Clone()
@@ -156,8 +156,8 @@ public class SubQueryCondition<T> : AbstractCondition where T : BaseQuery<T>
 /// </summary>
 public class InCondition<T> : AbstractCondition
 {
-    public string Column { get; set; }
-    public IEnumerable<T> Values { get; set; }
+    public required string Column { get; set; }
+    public required IEnumerable<T> Values { get; set; }
     public override AbstractClause Clone()
         => new InCondition<T>
         {
@@ -175,8 +175,8 @@ public class InCondition<T> : AbstractCondition
 /// </summary>
 public class InQueryCondition : AbstractCondition
 {
-    public Query Query { get; set; }
-    public string Column { get; set; }
+    public required Query Query { get; set; }
+    public required string Column { get; set; }
     public override AbstractClause Clone()
         => new InQueryCondition
         {
@@ -193,10 +193,11 @@ public class InQueryCondition : AbstractCondition
 /// Represents a "is between" condition.
 /// </summary>
 public class BetweenCondition<T> : AbstractCondition
+    where T : notnull
 {
-    public string Column { get; set; }
-    public T Higher { get; set; }
-    public T Lower { get; set; }
+    public required string Column { get; set; }
+    public required T Higher { get; set; }
+    public required T Lower { get; set; }
     public override AbstractClause Clone()
         => new BetweenCondition<T>
         {
@@ -215,7 +216,7 @@ public class BetweenCondition<T> : AbstractCondition
 /// </summary>
 public class NullCondition : AbstractCondition
 {
-    public string Column { get; set; }
+    public required string Column { get; set; }
 
     /// <inheritdoc />
     public override AbstractClause Clone()
@@ -234,8 +235,8 @@ public class NullCondition : AbstractCondition
 /// </summary>
 public class BooleanCondition : AbstractCondition
 {
-    public string Column { get; set; }
-    public bool Value { get; set; }
+    public required string Column { get; set; }
+    public required bool Value { get; set; }
 
     /// <inheritdoc />
     public override AbstractClause Clone()
@@ -256,7 +257,7 @@ public class BooleanCondition : AbstractCondition
 /// </summary>
 public class NestedCondition<T> : AbstractCondition where T : BaseQuery<T>
 {
-    public T Query { get; set; }
+    public required T Query { get; set; }
     public override AbstractClause Clone()
         => new NestedCondition<T>
         {
@@ -273,7 +274,7 @@ public class NestedCondition<T> : AbstractCondition where T : BaseQuery<T>
 /// </summary>
 public class ExistsCondition : AbstractCondition
 {
-    public Query Query { get; set; }
+    public required Query Query { get; set; }
 
     /// <inheritdoc />
     public override AbstractClause Clone()
@@ -289,8 +290,8 @@ public class ExistsCondition : AbstractCondition
 
 public class RawCondition : AbstractCondition
 {
-    public string Expression { get; set; }
-    public object[] Bindings { set; get; }
+    public required string Expression { get; set; }
+    public required object[] Bindings { set; get; }
 
     /// <inheritdoc />
     public override AbstractClause Clone()

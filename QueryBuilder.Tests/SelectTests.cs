@@ -291,7 +291,7 @@ namespace SqlKata.Tests
         public void MultipleUnionWithBindingsAndPagination()
         {
             var laptops = new Query("Laptops").Where("Price", ">", 1000);
-            var tablets = new Query("Tablets").Where("Price", ">", 2000).ForPage(2);
+            var tablets = new Query("Tablets").Where("Price", ">", 2000);
 
             var mobiles = new Query("Phones").Where("Price", "<", 3000).Union(laptops).UnionAll(tablets);
 

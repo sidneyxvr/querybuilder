@@ -18,7 +18,7 @@ internal class ConditionsCompilerProvider
 
         lock (syncRoot)
         {
-            if (methodsCache.TryGetValue(cacheKey, out MethodInfo value))
+            if (methodsCache.TryGetValue(cacheKey, out var value))
             {
                 return value;
             }

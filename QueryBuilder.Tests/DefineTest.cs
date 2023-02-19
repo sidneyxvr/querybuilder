@@ -422,6 +422,15 @@ namespace SqlKata.Tests
             Assert.Equal("SELECT [City] FROM [Customers] UNION ALL SELECT City FROM Suppliers WHERE 1 = 1 AND 2 = 2", c[EngineCodes.SqlServer]);
         }
         */
+        [Fact]
+        public void WhereUnsafeLiteral()
+        {
+            var q = new Query("Table1")
+                .Where("Field1", "=", new UnsafeLiteral("Value1"));
 
+            var c = Compile(q);
+
+            Assert.Equal("""SELECT * FROM "Table1" WHERE Field1 = Value1""", c[EngineCodes.PostgreSql]);
+        }
     }
 }

@@ -1,3 +1,5 @@
+using QueryBuilder.Clauses;
+
 namespace SqlKata;
 
 public partial class Query
@@ -6,7 +8,7 @@ public partial class Query
     {
         var join = callback.Invoke(new Join().AsInner());
 
-        return AddComponent("join", new BaseJoin
+        return AddComponent(Component.Join, new BaseJoin
         {
             Join = join
         });

@@ -5,7 +5,6 @@ public class SqliteCompiler : Compiler
     public override string EngineCode { get; } = EngineCodes.Sqlite;
     protected override string OpeningIdentifier { get; set; } = "\"";
     protected override string ClosingIdentifier { get; set; } = "\"";
-    protected override string LastId { get; set; } = "select last_insert_rowid() as id";
     public override bool SupportsFilterClause { get; set; } = true;
 
     public override string CompileTrue()
@@ -18,7 +17,7 @@ public class SqliteCompiler : Compiler
         return "0";
     }
 
-    public override string CompileLimit(SqlResult ctx)
+    public override string? CompileLimit(SqlResult ctx)
     {
         var limit = ctx.Query.GetLimit(EngineCode);
         var offset = ctx.Query.GetOffset(EngineCode);

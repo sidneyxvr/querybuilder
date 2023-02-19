@@ -7,7 +7,7 @@ public abstract class AbstractOrderBy : AbstractClause
 
 public class OrderBy : AbstractOrderBy
 {
-    public string Column { get; set; }
+    public required string Column { get; set; }
     public bool Ascending { get; set; } = true;
 
     /// <inheritdoc />
@@ -23,8 +23,8 @@ public class OrderBy : AbstractOrderBy
 
 public class RawOrderBy : AbstractOrderBy
 {
-    public string Expression { get; set; }
-    public object[] Bindings { set; get; }
+    public required string Expression { get; set; }
+    public required object[] Bindings { set; get; }
 
     /// <inheritdoc />
     public override AbstractClause Clone()

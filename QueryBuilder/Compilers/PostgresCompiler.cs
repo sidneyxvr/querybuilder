@@ -4,7 +4,6 @@ public class PostgresCompiler : Compiler
 {
     public PostgresCompiler()
     {
-        LastId = "SELECT lastval() AS id";
     }
 
     public override string EngineCode { get; } = EngineCodes.PostgreSql;
@@ -16,13 +15,7 @@ public class PostgresCompiler : Compiler
 
         var column = Wrap(x.Column);
 
-        var value = Resolve(ctx, x.Value) as string;
-
-        if (value == null)
-        {
-            throw new ArgumentException("Expecting a non nullable string");
-        }
-
+        var value = Resolve(ctx, x.Value) as string ?? throw new ArgumentException("Expecting a non nullable string");
         var method = x.Operator;
 
         if (new[] { "starts", "ends", "contains", "like", "ilike" }.Contains(x.Operator))

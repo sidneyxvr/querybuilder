@@ -1,3 +1,7 @@
+using QueryBuilder.Clauses;
+using QueryBuilder.Exceptions;
+using System;
+
 namespace SqlKata.Compilers;
 
 public class FirebirdCompiler : Compiler
@@ -11,6 +15,9 @@ public class FirebirdCompiler : Compiler
 
     public override string? CompileLimit(SqlResult ctx)
     {
+        ArgumentNullException.ThrowIfNull(ctx);
+        CustomNullReferenceException.ThrowIfNull(ctx.Query);
+
         var limit = ctx.Query.GetLimit(EngineCode);
         var offset = ctx.Query.GetOffset(EngineCode);
 
@@ -37,17 +44,17 @@ public class FirebirdCompiler : Compiler
         {
             ctx.Bindings.Insert(0, limit);
 
-            ctx.Query.ClearComponent("limit");
+            ctx.Query.ClearComponent(Component.Limit);
 
-            return $"SELECT FIRST {ParameterPlaceholder}" + compiled.Substring(6);
+            return string.Concat($"SELECT FIRST {ParameterPlaceholder}", compiled[6..]);
         }
         else if (limit == 0 && offset > 0)
         {
             ctx.Bindings.Insert(0, offset);
 
-            ctx.Query.ClearComponent("offset");
+            ctx.Query.ClearComponent(Component.Offset);
 
-            return $"SELECT SKIP {ParameterPlaceholder}" + compiled.Substring(6);
+            return $"SELECT SKIP {ParameterPlaceholder}" + compiled[6..];
         }
 
         return compiled;

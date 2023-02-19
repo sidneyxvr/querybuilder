@@ -13,10 +13,7 @@ namespace SqlKata.Tests
 
             var c = Compile(query);
 
-            Assert.Equal("SELECT COUNT(*) AS [count] FROM [A]", c[EngineCodes.SqlServer]);
-            Assert.Equal("SELECT COUNT(*) AS `count` FROM `A`", c[EngineCodes.MySql]);
-            Assert.Equal("SELECT COUNT(*) AS \"count\" FROM \"A\"", c[EngineCodes.PostgreSql]);
-            Assert.Equal("SELECT COUNT(*) AS \"COUNT\" FROM \"A\"", c[EngineCodes.Firebird]);
+            AssertSql("SELECT COUNT(*) AS [count] FROM [A]", c);
         }
 
         [Fact]

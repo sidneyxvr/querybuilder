@@ -7,7 +7,7 @@ public abstract class AbstractJoin : AbstractClause
 
 public class BaseJoin : AbstractJoin
 {
-    public Join Join { get; set; }
+    public required Join Join { get; set; }
 
     public override AbstractClause Clone()
         => new BaseJoin
@@ -20,12 +20,12 @@ public class BaseJoin : AbstractJoin
 
 public class DeepJoin : AbstractJoin
 {
-    public string Type { get; set; }
-    public string Expression { get; set; }
-    public string SourceKeySuffix { get; set; }
-    public string TargetKey { get; set; }
-    public Func<string, string> SourceKeyGenerator { get; set; }
-    public Func<string, string> TargetKeyGenerator { get; set; }
+    public required string Type { get; set; }
+    public required string Expression { get; set; }
+    public required string SourceKeySuffix { get; set; }
+    public required string TargetKey { get; set; }
+    public required Func<string, string> SourceKeyGenerator { get; set; }
+    public required Func<string, string> TargetKeyGenerator { get; set; }
 
     /// <inheritdoc />
     public override AbstractClause Clone()

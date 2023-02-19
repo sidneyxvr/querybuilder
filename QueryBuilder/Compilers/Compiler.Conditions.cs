@@ -1,4 +1,6 @@
+using QueryBuilder.Clauses;
 using System.Reflection;
+using System.Text;
 
 namespace SqlKata.Compilers;
 
@@ -7,7 +9,7 @@ public partial class Compiler
     protected virtual MethodInfo FindCompilerMethodInfo(Type clauseType, string methodName)
         => _compileConditionMethodsProvider.GetMethodInfo(clauseType, methodName);
 
-    protected virtual string CompileCondition(SqlResult ctx, AbstractCondition clause)
+    protected virtual string? CompileCondition(SqlResult ctx, AbstractCondition clause)
     {
         var clauseType = clause.GetType();
 
@@ -39,7 +41,7 @@ public partial class Compiler
 
     protected virtual string CompileConditions(SqlResult ctx, List<AbstractCondition> conditions)
     {
-        var result = new List<string>();
+        var conditionsBuilder = new StringBuilder();
 
         for (var i = 0; i < conditions.Count; i++)
         {
@@ -50,18 +52,21 @@ public partial class Compiler
                 continue;
             }
 
-            var boolOperator = i == 0 ? "" : (conditions[i].IsOr ? "OR " : "AND ");
+            if (i != 0)
+            {
+                conditionsBuilder.Append(conditions[i].IsOr ? " OR " : " AND ");
+            }
 
-            result.Add(boolOperator + compiled);
+            conditionsBuilder.Append(compiled);
         }
 
-        return string.Join(' ', result);
+        return conditionsBuilder.ToString();
     }
 
     protected virtual string CompileRawCondition(SqlResult ctx, RawCondition x)
     {
         ctx.Bindings.AddRange(x.Bindings);
-        return WrapIdentifiers(x.Expression);
+        return x.Expression;
     }
 
     protected virtual string CompileQueryCondition<T>(SqlResult ctx, QueryCondition<T> x) where T : BaseQuery<T>
@@ -163,12 +168,12 @@ public partial class Compiler
 
     protected virtual string? CompileNestedCondition<Q>(SqlResult ctx, NestedCondition<Q> x) where Q : BaseQuery<Q>
     {
-        if (!(x.Query.HasComponent("where", EngineCode) || x.Query.HasComponent("having", EngineCode)))
+        if (!(x.Query.HasComponent(Component.Where, EngineCode) || x.Query.HasComponent(Component.Having, EngineCode)))
         {
             return null;
         }
 
-        var clause = x.Query.HasComponent("where", EngineCode) ? "where" : "having";
+        var clause = x.Query.HasComponent(Component.Where, EngineCode) ? Component.Where : Component.Having;
 
         var clauses = x.Query.GetComponents<AbstractCondition>(clause, EngineCode);
 
@@ -187,18 +192,20 @@ public partial class Compiler
     }
 
     protected virtual string CompileBetweenCondition<T>(SqlResult ctx, BetweenCondition<T> item)
+        where T : notnull
     {
         ArgumentNullException.ThrowIfNull(ctx);
         ArgumentNullException.ThrowIfNull(item);
 
         var between = item.IsNot ? "NOT BETWEEN" : "BETWEEN";
-        var lower = Parameter(ctx, item.Lower);
-        var higher = Parameter(ctx, item.Higher);
+        var lower = Parameter(ctx, item.Lower!);
+        var higher = Parameter(ctx, item.Higher!);
 
         return Wrap(item.Column) + $" {between} {lower} AND {higher}";
     }
 
     protected virtual string CompileInCondition<T>(SqlResult ctx, InCondition<T> item)
+        where T : notnull
     {
         var column = Wrap(item.Column);
 
@@ -250,7 +257,7 @@ public partial class Compiler
 
         if (OmitSelectInsideExists)
         {
-            query.ClearComponent("select").SelectRaw("1");
+            query.ClearComponent(Component.Select).SelectRaw("1");
         }
 
         var subCtx = CompileSelectQuery(query);

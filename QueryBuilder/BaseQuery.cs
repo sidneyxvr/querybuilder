@@ -1,8 +1,10 @@
+using QueryBuilder.Clauses;
+
 namespace SqlKata;
 
 public abstract class AbstractQuery
 {
-    public AbstractQuery Parent;
+    public AbstractQuery? Parent;
 }
 
 public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q>
@@ -64,7 +66,7 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="clause"></param>
     /// <param name="engineCode"></param>
     /// <returns></returns>
-    public Q AddComponent(string component, AbstractClause clause, string? engineCode = null)
+    public Q AddComponent(Component component, AbstractClause clause, string? engineCode = null)
     {
         engineCode ??= EngineScope;
 
@@ -84,7 +86,7 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="clause"></param>
     /// <param name="engineCode"></param>
     /// <returns></returns>
-    public Q AddOrReplaceComponent(string component, AbstractClause clause, string? engineCode = null)
+    public Q AddOrReplaceComponent(Component component, AbstractClause clause, string? engineCode = null)
     {
         engineCode ??= EngineScope;
 
@@ -101,7 +103,7 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// Get the list of clauses for a component.
     /// </summary>
     /// <returns></returns>
-    public List<C> GetComponents<C>(string component, string? engineCode = null) where C : AbstractClause
+    public List<C> GetComponents<C>(Component component, string? engineCode = null) where C : AbstractClause
     {
         engineCode ??= EngineScope;
 
@@ -119,7 +121,7 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="component"></param>
     /// <param name="engineCode"></param>
     /// <returns></returns>
-    public List<AbstractClause> GetComponents(string component, string? engineCode = null)
+    public List<AbstractClause> GetComponents(Component component, string? engineCode = null)
     {
         engineCode ??= EngineScope;
 
@@ -130,7 +132,7 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// Get a single component clause from the query.
     /// </summary>
     /// <returns></returns>
-    public C GetOneComponent<C>(string component, string? engineCode = null) where C : AbstractClause
+    public C? GetOneComponent<C>(Component component, string? engineCode = null) where C : AbstractClause
     {
         engineCode ??= EngineScope;
 
@@ -144,7 +146,7 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="component"></param>
     /// <param name="engineCode"></param>
     /// <returns></returns>
-    public AbstractClause GetOneComponent(string component, string? engineCode = null)
+    public AbstractClause? GetOneComponent(Component component, string? engineCode = null)
     {
         engineCode ??= EngineScope;
 
@@ -157,7 +159,7 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="component"></param>
     /// <param name="engineCode"></param>
     /// <returns></returns>
-    public bool HasComponent(string component, string? engineCode = null)
+    public bool HasComponent(Component component, string? engineCode = null)
     {
         engineCode ??= EngineScope;
 
@@ -170,7 +172,7 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="component"></param>
     /// <param name="engineCode"></param>
     /// <returns></returns>
-    public Q ClearComponent(string component, string? engineCode = null)
+    public Q ClearComponent(Component component, string? engineCode = null)
     {
         engineCode ??= EngineScope;
 
@@ -243,7 +245,7 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="table"></param>
     /// <returns></returns>
     public Q From(string table)
-        => AddOrReplaceComponent("from", new FromClause
+        => AddOrReplaceComponent(Component.From, new FromClause
         {
             Table = table,
         });
@@ -258,14 +260,14 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
             query.As(alias);
         };
 
-        return AddOrReplaceComponent("from", new QueryFromClause
+        return AddOrReplaceComponent(Component.From, new QueryFromClause
         {
             Query = query
         });
     }
 
     public Q FromRaw(string sql, params object[] bindings)
-        => AddOrReplaceComponent("from", new RawFromClause
+        => AddOrReplaceComponent(Component.From, new RawFromClause
         {
             Expression = sql,
             Bindings = bindings,

@@ -4,8 +4,15 @@ using System.Text.RegularExpressions;
 
 namespace SqlKata;
 
-public static class Helper
+public static partial class Helper
 {
+    [GeneratedRegex(@"^(?:\w+\.){1,2}{(.*)}")]
+    private static partial Regex ExpandRegex();
+
+
+    [GeneratedRegex("\\s*,\\s*")]
+    private static partial Regex ColumnRegex();
+
     public static bool IsArray(object value)
         => value switch
         {
@@ -25,7 +32,7 @@ public static class Helper
         {
             if (IsArray(item))
             {
-                foreach (var sub in (item as IEnumerable))
+                foreach (var sub in (IEnumerable)item)
                 {
                     yield return sub;
                 }
@@ -34,12 +41,11 @@ public static class Helper
             {
                 yield return item;
             }
-
         }
     }
 
     public static IEnumerable<object> FlattenDeep(IEnumerable<object> array)
-        => array.SelectMany(o => IsArray(o) ? FlattenDeep(o as IEnumerable<object>) : new[] { o });
+        => array.SelectMany(o => IsArray(o) ? FlattenDeep((IEnumerable<object>)o) : new[] { o });
 
     public static IEnumerable<int> AllIndexesOf(string str, string value)
     {
@@ -71,27 +77,12 @@ public static class Helper
             return subject;
         }
 
-        var splitted = subject.Split(
-            new[] { match },
-            StringSplitOptions.None
-        );
+        var splitted = subject.Split(match, StringSplitOptions.None);
 
         return splitted.Skip(1)
-          .Select((item, index) => callback(index) + item)
-          .Aggregate(new StringBuilder(splitted.First()), (prev, right) => prev.Append(right))
-          .ToString();
-    }
-
-    public static string JoinArray(string glue, IEnumerable array)
-    {
-        var result = new List<string>();
-
-        foreach (var item in array)
-        {
-            result.Add(item.ToString());
-        }
-
-        return string.Join(glue, result);
+            .Select((item, index) => callback(index) + item)
+            .Aggregate(new StringBuilder(splitted.First()), (prev, right) => prev.Append(right))
+            .ToString();
     }
 
     public static string ExpandParameters(string sql, string placeholder, object[] bindings)
@@ -101,8 +92,8 @@ public static class Helper
 
             if (IsArray(parameter))
             {
-                var count = EnumerableCount(parameter as IEnumerable);
-                return string.Join(",", placeholder.Repeat(count));
+                var count = EnumerableCount((IEnumerable)parameter);
+                return string.Join(',', placeholder.Repeat(count));
             }
 
             return placeholder.ToString();
@@ -122,20 +113,19 @@ public static class Helper
 
     public static List<string> ExpandExpression(string expression)
     {
-        var regex = @"^(?:\w+\.){1,2}{(.*)}";
-        var match = Regex.Match(expression, regex);
+        var match = ExpandRegex().Match(expression);
 
         if (!match.Success)
         {
             // we did not found a match return the string as is.
-            return new List<string> { expression };
+            return new List<string>(1) { expression };
         }
 
-        var table = expression.Substring(0, expression.IndexOf(".{"));
+        var table = expression[..expression.IndexOf(".{")];
 
         var captures = match.Groups[1].Value;
 
-        var cols = Regex.Split(captures, @"\s*,\s*")
+        var cols = ColumnRegex().Split(captures)
             .Select(x => $"{table}.{x.Trim()}")
             .ToList();
 

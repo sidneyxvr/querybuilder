@@ -16,7 +16,7 @@ public class Column : AbstractColumn
     /// <value>
     /// The column name.
     /// </value>
-    public string Name { get; set; }
+    public required string Name { get; set; }
 
     /// <inheritdoc />
     public override AbstractClause Clone()
@@ -40,7 +40,7 @@ public class QueryColumn : AbstractColumn
     /// <value>
     /// The query for column value calculation.
     /// </value>
-    public Query Query { get; set; }
+    public required Query Query { get; set; }
     public override AbstractClause Clone()
         => new QueryColumn
         {
@@ -58,8 +58,8 @@ public class RawColumn : AbstractColumn
     /// <value>
     /// The RAW expression.
     /// </value>
-    public string Expression { get; set; }
-    public object[] Bindings { set; get; }
+    public required string Expression { get; set; }
+    public required object[] Bindings { set; get; }
 
     /// <inheritdoc />
     public override AbstractClause Clone()
@@ -85,15 +85,15 @@ public class AggregatedColumn : AbstractColumn
     /// <value>
     /// The filter query.
     /// </value>
-    public Query? Filter { get; set; } = null;
-    public string Aggregate { get; set; }
-    public AbstractColumn Column { get; set; }
+    public Query? Filter { get; set; }
+    public required string Aggregate { get; set; }
+    public required AbstractColumn Column { get; set; }
     public override AbstractClause Clone()
         => new AggregatedColumn
         {
             Engine = Engine,
             Filter = Filter?.Clone(),
-            Column = Column.Clone() as AbstractColumn,
+            Column = (AbstractColumn)Column.Clone(),
             Aggregate = Aggregate,
             Component = Component,
         };

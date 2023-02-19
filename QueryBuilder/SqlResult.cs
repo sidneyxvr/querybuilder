@@ -5,7 +5,7 @@ namespace SqlKata;
 
 public class SqlResult
 {
-    public Query Query { get; set; }
+    public Query Query { get; set; } = null!;
     public string RawSql { get; set; } = "";
     public List<object> Bindings { get; set; } = new();
     public string Sql { get; set; } = "";
@@ -40,44 +40,33 @@ public class SqlResult
         });
     }
 
-    private string ChangeToSqlValue(object value)
+    private static string ChangeToSqlValue(object value)
     {
-        if (value == null)
+        if (value is null)
         {
             return "NULL";
         }
 
         if (Helper.IsArray(value))
         {
-            return Helper.JoinArray(",", value as IEnumerable);
+            return string.Join(',', (IEnumerable)value);
         }
 
         if (NumberTypes.Contains(value.GetType()))
         {
-            return Convert.ToString(value, CultureInfo.InvariantCulture);
+            return Convert.ToString(value, CultureInfo.InvariantCulture)!;
         }
 
-        if (value is DateTime date)
+        return value switch
         {
-            if (date.Date == date)
-            {
-                return "'" + date.ToString("yyyy-MM-dd") + "'";
-            }
-
-            return "'" + date.ToString("yyyy-MM-dd HH:mm:ss") + "'";
-        }
-
-        if (value is bool vBool)
-        {
-            return vBool ? "true" : "false";
-        }
-
-        if (value is Enum vEnum)
-        {
-            return Convert.ToInt32(vEnum) + $" /* {vEnum} */";
-        }
-
-        // fallback to string
-        return "'" + value.ToString().Replace("'", "''") + "'";
+            DateTime date => date == date.Date
+                ? "'" + date.ToString("yyyy-MM-dd") + "'"
+                : "'" + date.ToString("yyyy-MM-dd HH:mm:ss") + "'",
+            bool b => b
+                ? "true"
+                : "false",
+            Enum e => Convert.ToInt32(e) + $" /* {e} */",
+            _ => "'" + value.ToString()!.Replace("'", "''") + "'"
+        };
     }
 }

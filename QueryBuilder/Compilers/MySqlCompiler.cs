@@ -5,7 +5,6 @@ public class MySqlCompiler : Compiler
     public MySqlCompiler()
     {
         OpeningIdentifier = ClosingIdentifier = "`";
-        LastId = "SELECT last_insert_id() as Id";
     }
 
     public override string EngineCode { get; } = EngineCodes.MySql;

@@ -1,3 +1,5 @@
+using QueryBuilder.Clauses;
+
 namespace SqlKata.Compilers;
 
 public class OracleCompiler : Compiler
@@ -45,7 +47,7 @@ public class OracleCompiler : Compiler
 
         var safeOrder = "";
 
-        if (!ctx.Query.HasComponent("order"))
+        if (!ctx.Query.HasComponent(Component.Order))
         {
             safeOrder = "ORDER BY (SELECT 0 FROM DUAL) ";
         }
@@ -98,12 +100,11 @@ public class OracleCompiler : Compiler
 
         var column = Wrap(condition.Column);
         var value = Parameter(ctx, condition.Value);
+        var isDateTime = condition.Value is DateTime;
 
-        var sql = "";
-        var valueFormat = "";
+        string? valueFormat;
 
-        var isDateTime = (condition.Value is DateTime dt);
-
+        string? sql;
         switch (condition.Part)
         {
             case "date": // assume YY-MM-DD format
@@ -119,7 +120,7 @@ public class OracleCompiler : Compiler
                 else
                 {
                     // assume HH:MM format
-                    if (condition.Value.ToString().Split(':').Count() == 2)
+                    if (condition.Value.ToString()!.Split(':').Length == 2)
                         valueFormat = $"TO_DATE({value}, 'HH24:MI')";
                     else // assume HH:MM:SS format
                         valueFormat = $"TO_DATE({value}, 'HH24:MI:SS')";
@@ -145,24 +146,5 @@ public class OracleCompiler : Compiler
         }
 
         return sql;
-
-    }
-
-    protected override SqlResult CompileRemainingInsertClauses(
-        SqlResult ctx, string table, IEnumerable<InsertClause> inserts)
-    {
-        foreach (var insert in inserts.Skip(1))
-        {
-            string columns = GetInsertColumnsList(insert.Columns);
-            string values = string.Join(", ", Parameterize(ctx, insert.Values));
-
-            string intoFormat = " INTO {0}{1} VALUES ({2})";
-            var nextInsert = string.Format(intoFormat, table, columns, values);
-
-            ctx.RawSql += nextInsert;
-        }
-
-        ctx.RawSql += " SELECT 1 FROM DUAL";
-        return ctx;
     }
 }

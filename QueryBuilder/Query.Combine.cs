@@ -1,3 +1,5 @@
+using QueryBuilder.Clauses;
+
 namespace SqlKata;
 
 public partial class Query
@@ -9,7 +11,7 @@ public partial class Query
             throw new InvalidOperationException("Only select queries can be combined.");
         }
 
-        return AddComponent("combine", new Combine
+        return AddComponent(Component.Combine, new Combine
         {
             Query = query,
             Operation = operation,
@@ -24,7 +26,7 @@ public partial class Query
             throw new InvalidOperationException("Only select queries can be combined.");
         }
 
-        return AddComponent("combine", new RawCombine
+        return AddComponent(Component.Combine, new RawCombine
         {
             Expression = sql,
             Bindings = bindings,

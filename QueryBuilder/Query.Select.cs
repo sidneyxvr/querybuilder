@@ -1,3 +1,5 @@
+using QueryBuilder.Clauses;
+
 namespace SqlKata;
 
 public partial class Query
@@ -14,10 +16,9 @@ public partial class Query
             .SelectMany(x => x)
             .ToArray();
 
-
         foreach (var column in columns)
         {
-            AddComponent("select", new Column
+            AddComponent(Component.Select, new Column
             {
                 Name = column
             });
@@ -34,7 +35,7 @@ public partial class Query
     {
         Method = "select";
 
-        AddComponent("select", new RawColumn
+        AddComponent(Component.Select, new RawColumn
         {
             Expression = sql,
             Bindings = bindings,
@@ -49,7 +50,7 @@ public partial class Query
 
         query = query.Clone();
 
-        AddComponent("select", new QueryColumn
+        AddComponent(Component.Select, new QueryColumn
         {
             Query = query.As(alias),
         });
@@ -60,11 +61,11 @@ public partial class Query
     public Query Select(Func<Query, Query> callback, string alias)
         => Select(callback.Invoke(NewChild()), alias);
 
-    public Query SelectAggregate(string aggregate, string column, Query filter = null)
+    public Query SelectAggregate(string aggregate, string column, Query? filter = null)
     {
         Method = "select";
 
-        AddComponent("select", new AggregatedColumn
+        AddComponent(Component.Select, new AggregatedColumn
         {
             Column = new Column { Name = column },
             Aggregate = aggregate,

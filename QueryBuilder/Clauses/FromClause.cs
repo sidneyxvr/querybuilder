@@ -16,22 +16,12 @@ public abstract class AbstractFrom : AbstractClause
 /// </summary>
 public class FromClause : AbstractFrom
 {
-    public string Table { get; set; }
+    public required string Table { get; set; }
 
     public override string? Alias
-    {
-        get
-        {
-            if (Table.IndexOf(" as ", StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                var segments = Table.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
-                return segments[2];
-            }
-
-            return Table;
-        }
-    }
+        => Table.Contains(" as ", StringComparison.OrdinalIgnoreCase)
+        ? Table.Split(' ', StringSplitOptions.RemoveEmptyEntries)[2]
+        : Table;
 
     /// <inheritdoc />
     public override AbstractClause Clone()
@@ -49,9 +39,9 @@ public class FromClause : AbstractFrom
 /// </summary>
 public class QueryFromClause : AbstractFrom
 {
-    public Query Query { get; set; }
+    public required Query Query { get; set; }
 
-    public override string Alias
+    public override string? Alias
         => string.IsNullOrEmpty(_alias) ? Query.QueryAlias : _alias;
 
     /// <inheritdoc />
@@ -67,8 +57,8 @@ public class QueryFromClause : AbstractFrom
 
 public class RawFromClause : AbstractFrom
 {
-    public string Expression { get; set; }
-    public object[] Bindings { set; get; }
+    public required string Expression { get; set; }
+    public required object[] Bindings { set; get; }
 
     /// <inheritdoc />
     public override AbstractClause Clone()
@@ -87,8 +77,8 @@ public class RawFromClause : AbstractFrom
 /// </summary>
 public class AdHocTableFromClause : AbstractFrom
 {
-    public List<string> Columns { get; set; }
-    public List<object> Values { get; set; }
+    public required List<string> Columns { get; set; }
+    public required List<object> Values { get; set; }
 
     public override AbstractClause Clone()
         => new AdHocTableFromClause

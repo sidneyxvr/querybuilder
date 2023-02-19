@@ -1,3 +1,5 @@
+using QueryBuilder.Clauses;
+
 namespace SqlKata;
 
 public abstract class AbstractClause
@@ -16,6 +18,6 @@ public abstract class AbstractClause
     /// <value>
     /// The component name.
     /// </value>
-    public string Component { get; set; }
+    public Component? Component { get; set; }
     public abstract AbstractClause Clone();
 }

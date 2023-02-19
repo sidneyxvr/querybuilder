@@ -3,6 +3,7 @@ namespace SqlKata;
 /// <summary>
 /// This class is used as metadata on a property to generate different name in the output query.
 /// </summary>
+[AttributeUsage(AttributeTargets.Property)]
 public class ColumnAttribute : Attribute
 {
     public string Name { get; private set; }

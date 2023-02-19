@@ -1,3 +1,5 @@
+using QueryBuilder.Clauses;
+
 namespace SqlKata;
 
 public partial class Query
@@ -6,8 +8,8 @@ public partial class Query
     {
         Method = "aggregate";
 
-        ClearComponent("aggregate")
-            .AddComponent("aggregate", new AggregateClause
+        ClearComponent(Component.Aggregate)
+            .AddComponent(Component.Aggregate, new AggregateClause
             {
                 Type = type,
                 Columns = columns?.ToList() ?? new List<string>(),
