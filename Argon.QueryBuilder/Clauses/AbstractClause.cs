@@ -1,0 +1,21 @@
+namespace Argon.QueryBuilder.Clauses;
+
+public abstract class AbstractClause
+{
+    /// <summary>
+    /// Gets or sets the SQL engine.
+    /// </summary>
+    /// <value>
+    /// The SQL engine.
+    /// </value>
+    public string? Engine { get; set; } = null;
+
+    /// <summary>
+    /// Gets or sets the component name.
+    /// </summary>
+    /// <value>
+    /// The component name.
+    /// </value>
+    public Component? Component { get; set; }
+    public abstract AbstractClause Clone();
+}

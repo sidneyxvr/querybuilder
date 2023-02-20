@@ -1,0 +1,47 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33209.295
+MinimumVisualStudioVersion = 15.0.26124.0
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{86D00525-7428-4DD7-914D-0A10D5C53EDE}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Argon.QueryBuilder", "Argon.QueryBuilder\Argon.QueryBuilder.csproj", "{FA498B25-3F51-4891-81FC-732D3FA9BED0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Argon.QueryBuilder.Benchmarks", "Argon.QueryBuilder.Benchmarks\Argon.QueryBuilder.Benchmarks.csproj", "{F451CF3E-B077-4CE7-AD08-7F2F49603249}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Argon.QueryBuilder.MySql", "Argon.QueryBuilder.MySql\Argon.QueryBuilder.MySql.csproj", "{FE2F682D-7555-4E35-B7DA-68CB38668D16}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Argon.QueryBuilder.Tests", "Argon.QueryBuilder.Tests\Argon.QueryBuilder.Tests.csproj", "{0C304A2F-8535-4540-9ABD-4A45CCC7E2C8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FA498B25-3F51-4891-81FC-732D3FA9BED0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA498B25-3F51-4891-81FC-732D3FA9BED0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA498B25-3F51-4891-81FC-732D3FA9BED0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA498B25-3F51-4891-81FC-732D3FA9BED0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F451CF3E-B077-4CE7-AD08-7F2F49603249}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F451CF3E-B077-4CE7-AD08-7F2F49603249}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F451CF3E-B077-4CE7-AD08-7F2F49603249}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F451CF3E-B077-4CE7-AD08-7F2F49603249}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE2F682D-7555-4E35-B7DA-68CB38668D16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE2F682D-7555-4E35-B7DA-68CB38668D16}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE2F682D-7555-4E35-B7DA-68CB38668D16}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE2F682D-7555-4E35-B7DA-68CB38668D16}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C304A2F-8535-4540-9ABD-4A45CCC7E2C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C304A2F-8535-4540-9ABD-4A45CCC7E2C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C304A2F-8535-4540-9ABD-4A45CCC7E2C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C304A2F-8535-4540-9ABD-4A45CCC7E2C8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8FFC834B-6CAA-409C-8E6A-43D4FB187669}
+	EndGlobalSection
+EndGlobal
