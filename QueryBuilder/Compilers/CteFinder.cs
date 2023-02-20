@@ -1,7 +1,8 @@
 using QueryBuilder.Clauses;
 using QueryBuilder.Exceptions;
+using SqlKata;
 
-namespace SqlKata.Compilers;
+namespace QueryBuilder.Compilers;
 
 public class CteFinder
 {

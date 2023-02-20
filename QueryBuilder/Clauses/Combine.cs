@@ -1,4 +1,6 @@
-namespace SqlKata;
+using SqlKata;
+
+namespace QueryBuilder.Clauses;
 
 public abstract class AbstractCombine : AbstractClause
 {

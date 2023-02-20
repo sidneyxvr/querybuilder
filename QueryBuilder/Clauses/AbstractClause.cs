@@ -1,6 +1,4 @@
-using QueryBuilder.Clauses;
-
-namespace SqlKata;
+namespace QueryBuilder.Clauses;
 
 public abstract class AbstractClause
 {

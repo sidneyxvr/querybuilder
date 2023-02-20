@@ -1,15 +1,23 @@
+using SqlKata;
 using System.Collections;
 using System.Globalization;
+using System.Text;
 
-namespace SqlKata;
+namespace QueryBuilder;
 
 public class SqlResult
 {
+    public StringBuilder SqlBuilder { get; set; } = new StringBuilder();
     public Query Query { get; set; } = null!;
     public string RawSql { get; set; } = "";
-    public List<object> Bindings { get; set; } = new();
     public string Sql { get; set; } = "";
     public Dictionary<string, object> NamedBindings = new();
+    public List<object> Bindings = new();
+
+    private int index = 0;
+
+    public string GetParamName()
+        => $"@p{index++}";
 
     private static readonly Type[] NumberTypes =
     {

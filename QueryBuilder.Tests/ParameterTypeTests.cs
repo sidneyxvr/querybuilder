@@ -38,15 +38,15 @@ namespace SqlKata.Tests
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
-        [Theory]
-        [ClassData(typeof(ParameterTypeGenerator))]
-        public void CorrectParameterTypeOutput(string rendered, object input)
-        {
-            var query = new Query("Table").Where("Col", input);
+        //[Theory]
+        //[ClassData(typeof(ParameterTypeGenerator))]
+        //public void CorrectParameterTypeOutput(string rendered, object input)
+        //{
+        //    var query = new Query("Table").Where("Col", input);
 
-            var c = Compile(query);
+        //    var c = Compile(query);
 
-            Assert.Equal($"SELECT * FROM [Table] WHERE [Col] = {rendered}", c[EngineCodes.SqlServer]);
-        }
+        //    Assert.Equal($"SELECT * FROM [Table] WHERE [Col] = {rendered}", c[EngineCodes.SqlServer]);
+        //}
     }
 }

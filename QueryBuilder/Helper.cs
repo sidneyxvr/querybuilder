@@ -2,7 +2,7 @@ using System.Collections;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace SqlKata;
+namespace Zine.QueryBuilder;
 
 public static partial class Helper
 {

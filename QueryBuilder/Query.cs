@@ -3,7 +3,7 @@ using QueryBuilder.Exceptions;
 using System.Collections.Concurrent;
 using System.Reflection;
 
-namespace SqlKata;
+namespace Zine.QueryBuilder;
 
 public partial class Query : BaseQuery<Query>
 {

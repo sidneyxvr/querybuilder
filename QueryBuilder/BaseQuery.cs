@@ -1,6 +1,6 @@
 using QueryBuilder.Clauses;
 
-namespace SqlKata;
+namespace Zine.QueryBuilder;
 
 public abstract class AbstractQuery
 {

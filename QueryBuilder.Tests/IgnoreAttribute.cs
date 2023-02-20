@@ -1,4 +1,4 @@
-namespace SqlKata;
+namespace SqlKata.Tests;
 
 /// <summary>
 /// This class is used as metadata to ignore a property on insert and update queries

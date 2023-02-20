@@ -1,6 +1,7 @@
 using QueryBuilder.Clauses;
+using SqlKata;
 
-namespace SqlKata;
+namespace QueryBuilder;
 
 public class Join : BaseQuery<Join>
 {

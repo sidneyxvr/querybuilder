@@ -1,4 +1,4 @@
-namespace SqlKata;
+namespace QueryBuilder.Clauses;
 
 /// <summary>
 /// Represents aggregate clause like "COUNT", "MAX" or etc.

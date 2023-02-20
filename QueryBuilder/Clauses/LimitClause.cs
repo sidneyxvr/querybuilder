@@ -1,4 +1,4 @@
-namespace SqlKata;
+namespace QueryBuilder.Clauses;
 
 public class LimitClause : AbstractClause
 {

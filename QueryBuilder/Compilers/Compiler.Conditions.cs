@@ -1,6 +1,6 @@
+using QueryBuilder;
 using QueryBuilder.Clauses;
 using System.Reflection;
-using System.Text;
 
 namespace SqlKata.Compilers;
 
@@ -39,10 +39,8 @@ public partial class Compiler
         }
     }
 
-    protected virtual string CompileConditions(SqlResult ctx, List<AbstractCondition> conditions)
+    protected virtual void CompileConditions(SqlResult ctx, List<AbstractCondition> conditions)
     {
-        var conditionsBuilder = new StringBuilder();
-
         for (var i = 0; i < conditions.Count; i++)
         {
             var compiled = CompileCondition(ctx, conditions[i]);
@@ -54,13 +52,11 @@ public partial class Compiler
 
             if (i != 0)
             {
-                conditionsBuilder.Append(conditions[i].IsOr ? " OR " : " AND ");
+                ctx.SqlBuilder.Append(conditions[i].IsOr ? " OR " : " AND ");
             }
 
-            conditionsBuilder.Append(compiled);
+            ctx.SqlBuilder.Append(compiled);
         }
-
-        return conditionsBuilder.ToString();
     }
 
     protected virtual string CompileRawCondition(SqlResult ctx, RawCondition x)
@@ -177,9 +173,18 @@ public partial class Compiler
 
         var clauses = x.Query.GetComponents<AbstractCondition>(clause, EngineCode);
 
-        var sql = CompileConditions(ctx, clauses);
+        if (x.IsNot)
+        {
+            ctx.SqlBuilder.Append("NOT ");
+        }
 
-        return x.IsNot ? $"NOT ({sql})" : $"({sql})";
+        ctx.SqlBuilder.Append('(');
+
+        CompileConditions(ctx, clauses);
+
+        ctx.SqlBuilder.Append(')');
+
+        return string.Empty;
     }
 
     protected string CompileTwoColumnsCondition(SqlResult ctx, TwoColumnsCondition clause)

@@ -1,4 +1,4 @@
-namespace SqlKata;
+namespace QueryBuilder;
 
 public static class Expressions
 {

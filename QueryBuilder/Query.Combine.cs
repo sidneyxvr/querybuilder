@@ -1,6 +1,6 @@
 using QueryBuilder.Clauses;
 
-namespace SqlKata;
+namespace Zine.QueryBuilder;
 
 public partial class Query
 {
@@ -47,9 +47,6 @@ public partial class Query
 
     public Query UnionAll(Func<Query, Query> callback)
         => Union(callback, true);
-
-    public Query UnionRaw(string sql, params object[] bindings)
-        => CombineRaw(sql, bindings);
 
     public Query Except(Query query, bool all = false)
         => Combine("except", all, query);

@@ -1,6 +1,7 @@
+using SqlKata.Compilers;
 using System.Reflection;
 
-namespace SqlKata.Compilers;
+namespace QueryBuilder.Compilers;
 
 internal class ConditionsCompilerProvider
 {

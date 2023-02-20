@@ -1,150 +1,150 @@
-using QueryBuilder.Clauses;
+//using QueryBuilder.Clauses;
 
-namespace SqlKata.Compilers;
+//namespace SqlKata.Compilers;
 
-public class OracleCompiler : Compiler
-{
-    public OracleCompiler()
-    {
-        ColumnAsKeyword = "";
-        TableAsKeyword = "";
-        ParameterPrefix = ":p";
-    }
+//public class OracleCompiler : Compiler
+//{
+//    public OracleCompiler()
+//    {
+//        ColumnAsKeyword = "";
+//        TableAsKeyword = "";
+//        ParameterPrefix = ":p";
+//    }
 
-    public override string EngineCode { get; } = EngineCodes.Oracle;
-    public bool UseLegacyPagination { get; set; } = false;
-    protected override string SingleRowDummyTableName => "DUAL";
+//    public override string EngineCode { get; } = EngineCodes.Oracle;
+//    public bool UseLegacyPagination { get; set; } = false;
+//    protected override string SingleRowDummyTableName => "DUAL";
 
-    protected override SqlResult CompileSelectQuery(Query query)
-    {
-        if (!UseLegacyPagination)
-        {
-            return base.CompileSelectQuery(query);
-        }
+//    protected override SqlResult CompileSelectQuery(Query query)
+//    {
+//        if (!UseLegacyPagination)
+//        {
+//            return base.CompileSelectQuery(query);
+//        }
 
-        var result = base.CompileSelectQuery(query);
+//        var result = base.CompileSelectQuery(query);
 
-        ApplyLegacyLimit(result);
+//        ApplyLegacyLimit(result);
 
-        return result;
-    }
+//        return result;
+//    }
 
-    public override string? CompileLimit(SqlResult ctx)
-    {
-        if (UseLegacyPagination)
-        {
-            // in pre-12c versions of Oracle, limit is handled by ROWNUM techniques
-            return null;
-        }
+//    public override string? CompileLimit(SqlResult ctx)
+//    {
+//        if (UseLegacyPagination)
+//        {
+//            // in pre-12c versions of Oracle, limit is handled by ROWNUM techniques
+//            return null;
+//        }
 
-        var limit = ctx.Query.GetLimit(EngineCode);
-        var offset = ctx.Query.GetOffset(EngineCode);
+//        var limit = ctx.Query.GetLimit(EngineCode);
+//        var offset = ctx.Query.GetOffset(EngineCode);
 
-        if (limit == 0 && offset == 0)
-        {
-            return null;
-        }
+//        if (limit == 0 && offset == 0)
+//        {
+//            return null;
+//        }
 
-        var safeOrder = "";
+//        var safeOrder = "";
 
-        if (!ctx.Query.HasComponent(Component.Order))
-        {
-            safeOrder = "ORDER BY (SELECT 0 FROM DUAL) ";
-        }
+//        if (!ctx.Query.HasComponent(Component.Order))
+//        {
+//            safeOrder = "ORDER BY (SELECT 0 FROM DUAL) ";
+//        }
 
-        if (limit == 0)
-        {
-            ctx.Bindings.Add(offset);
-            return $"{safeOrder}OFFSET {ParameterPlaceholder} ROWS";
-        }
+//        if (limit == 0)
+//        {
+//            ctx.Bindings.Add(offset);
+//            return $"{safeOrder}OFFSET {ParameterPlaceholder} ROWS";
+//        }
 
-        ctx.Bindings.Add(offset);
-        ctx.Bindings.Add(limit);
+//        ctx.Bindings.Add(offset);
+//        ctx.Bindings.Add(limit);
 
-        return $"{safeOrder}OFFSET {ParameterPlaceholder} ROWS FETCH NEXT {ParameterPlaceholder} ROWS ONLY";
-    }
+//        return $"{safeOrder}OFFSET {ParameterPlaceholder} ROWS FETCH NEXT {ParameterPlaceholder} ROWS ONLY";
+//    }
 
-    internal void ApplyLegacyLimit(SqlResult ctx)
-    {
-        var limit = ctx.Query.GetLimit(EngineCode);
-        var offset = ctx.Query.GetOffset(EngineCode);
+//    internal void ApplyLegacyLimit(SqlResult ctx)
+//    {
+//        var limit = ctx.Query.GetLimit(EngineCode);
+//        var offset = ctx.Query.GetOffset(EngineCode);
 
-        if (limit == 0 && offset == 0)
-        {
-            return;
-        }
+//        if (limit == 0 && offset == 0)
+//        {
+//            return;
+//        }
 
-        string newSql;
-        if (limit == 0)
-        {
-            newSql = $"SELECT * FROM (SELECT \"results_wrapper\".*, ROWNUM \"row_num\" FROM ({ctx.RawSql}) \"results_wrapper\") WHERE \"row_num\" > {ParameterPlaceholder}";
-            ctx.Bindings.Add(offset);
-        }
-        else if (offset == 0)
-        {
-            newSql = $"SELECT * FROM ({ctx.RawSql}) WHERE ROWNUM <= {ParameterPlaceholder}";
-            ctx.Bindings.Add(limit);
-        }
-        else
-        {
-            newSql = $"SELECT * FROM (SELECT \"results_wrapper\".*, ROWNUM \"row_num\" FROM ({ctx.RawSql}) \"results_wrapper\" WHERE ROWNUM <= {ParameterPlaceholder}) WHERE \"row_num\" > {ParameterPlaceholder}";
-            ctx.Bindings.Add(limit + offset);
-            ctx.Bindings.Add(offset);
-        }
+//        string newSql;
+//        if (limit == 0)
+//        {
+//            newSql = $"SELECT * FROM (SELECT \"results_wrapper\".*, ROWNUM \"row_num\" FROM ({ctx.RawSql}) \"results_wrapper\") WHERE \"row_num\" > {ParameterPlaceholder}";
+//            ctx.Bindings.Add(offset);
+//        }
+//        else if (offset == 0)
+//        {
+//            newSql = $"SELECT * FROM ({ctx.RawSql}) WHERE ROWNUM <= {ParameterPlaceholder}";
+//            ctx.Bindings.Add(limit);
+//        }
+//        else
+//        {
+//            newSql = $"SELECT * FROM (SELECT \"results_wrapper\".*, ROWNUM \"row_num\" FROM ({ctx.RawSql}) \"results_wrapper\" WHERE ROWNUM <= {ParameterPlaceholder}) WHERE \"row_num\" > {ParameterPlaceholder}";
+//            ctx.Bindings.Add(limit + offset);
+//            ctx.Bindings.Add(offset);
+//        }
 
-        ctx.RawSql = newSql;
-    }
+//        ctx.RawSql = newSql;
+//    }
 
-    protected override string CompileBasicDateCondition(SqlResult ctx, BasicDateCondition condition)
-    {
+//    protected override string CompileBasicDateCondition(SqlResult ctx, BasicDateCondition condition)
+//    {
 
-        var column = Wrap(condition.Column);
-        var value = Parameter(ctx, condition.Value);
-        var isDateTime = condition.Value is DateTime;
+//        var column = Wrap(condition.Column);
+//        var value = Parameter(ctx, condition.Value);
+//        var isDateTime = condition.Value is DateTime;
 
-        string? valueFormat;
+//        string? valueFormat;
 
-        string? sql;
-        switch (condition.Part)
-        {
-            case "date": // assume YY-MM-DD format
-                if (isDateTime)
-                    valueFormat = $"{value}";
-                else
-                    valueFormat = $"TO_DATE({value}, 'YY-MM-DD')";
-                sql = $"TO_CHAR({column}, 'YY-MM-DD') {condition.Operator} TO_CHAR({valueFormat}, 'YY-MM-DD')";
-                break;
-            case "time":
-                if (isDateTime)
-                    valueFormat = $"{value}";
-                else
-                {
-                    // assume HH:MM format
-                    if (condition.Value.ToString()!.Split(':').Length == 2)
-                        valueFormat = $"TO_DATE({value}, 'HH24:MI')";
-                    else // assume HH:MM:SS format
-                        valueFormat = $"TO_DATE({value}, 'HH24:MI:SS')";
-                }
-                sql = $"TO_CHAR({column}, 'HH24:MI:SS') {condition.Operator} TO_CHAR({valueFormat}, 'HH24:MI:SS')";
-                break;
-            case "year":
-            case "month":
-            case "day":
-            case "hour":
-            case "minute":
-            case "second":
-                sql = $"EXTRACT({condition.Part.ToUpperInvariant()} FROM {column}) {condition.Operator} {value}";
-                break;
-            default:
-                sql = $"{column} {condition.Operator} {value}";
-                break;
-        }
+//        string? sql;
+//        switch (condition.Part)
+//        {
+//            case "date": // assume YY-MM-DD format
+//                if (isDateTime)
+//                    valueFormat = $"{value}";
+//                else
+//                    valueFormat = $"TO_DATE({value}, 'YY-MM-DD')";
+//                sql = $"TO_CHAR({column}, 'YY-MM-DD') {condition.Operator} TO_CHAR({valueFormat}, 'YY-MM-DD')";
+//                break;
+//            case "time":
+//                if (isDateTime)
+//                    valueFormat = $"{value}";
+//                else
+//                {
+//                    // assume HH:MM format
+//                    if (condition.Value.ToString()!.Split(':').Length == 2)
+//                        valueFormat = $"TO_DATE({value}, 'HH24:MI')";
+//                    else // assume HH:MM:SS format
+//                        valueFormat = $"TO_DATE({value}, 'HH24:MI:SS')";
+//                }
+//                sql = $"TO_CHAR({column}, 'HH24:MI:SS') {condition.Operator} TO_CHAR({valueFormat}, 'HH24:MI:SS')";
+//                break;
+//            case "year":
+//            case "month":
+//            case "day":
+//            case "hour":
+//            case "minute":
+//            case "second":
+//                sql = $"EXTRACT({condition.Part.ToUpperInvariant()} FROM {column}) {condition.Operator} {value}";
+//                break;
+//            default:
+//                sql = $"{column} {condition.Operator} {value}";
+//                break;
+//        }
 
-        if (condition.IsNot)
-        {
-            return $"NOT ({sql})";
-        }
+//        if (condition.IsNot)
+//        {
+//            return $"NOT ({sql})";
+//        }
 
-        return sql;
-    }
-}
+//        return sql;
+//    }
+//}

@@ -2,7 +2,7 @@ using QueryBuilder.Clauses;
 using QueryBuilder.Exceptions;
 using System.Reflection;
 
-namespace SqlKata;
+namespace Zine.QueryBuilder;
 
 public partial class Query
 {

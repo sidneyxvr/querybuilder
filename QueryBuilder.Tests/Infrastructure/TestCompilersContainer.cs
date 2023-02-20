@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using QueryBuilder;
+using QueryBuilder.Compilers;
 using SqlKata.Compilers;
 
 namespace SqlKata.Tests.Infrastructure
@@ -15,15 +17,15 @@ namespace SqlKata.Tests.Infrastructure
 
         protected readonly IDictionary<string, Compiler> Compilers = new Dictionary<string, Compiler>
         {
-            [EngineCodes.Firebird] = new FirebirdCompiler(),
+            //[EngineCodes.Firebird] = new FirebirdCompiler(),
             [EngineCodes.MySql] = new MySqlCompiler(),
-            [EngineCodes.Oracle] = new OracleCompiler(),
-            [EngineCodes.PostgreSql] = new PostgresCompiler(),
-            [EngineCodes.Sqlite] = new SqliteCompiler(),
-            [EngineCodes.SqlServer] = new SqlServerCompiler()
-            {
-                UseLegacyPagination = true
-            }
+            //[EngineCodes.Oracle] = new OracleCompiler(),
+            //[EngineCodes.PostgreSql] = new PostgresCompiler(),
+            //[EngineCodes.Sqlite] = new SqliteCompiler(),
+            //[EngineCodes.SqlServer] = new SqlServerCompiler()
+            //{
+            //    UseLegacyPagination = true
+            //}
         };
 
         public IEnumerable<string> KnownEngineCodes

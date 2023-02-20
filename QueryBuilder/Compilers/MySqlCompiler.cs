@@ -1,4 +1,7 @@
-namespace SqlKata.Compilers;
+using QueryBuilder;
+using SqlKata.Compilers;
+
+namespace QueryBuilder.Compilers;
 
 public class MySqlCompiler : Compiler
 {
@@ -9,7 +12,7 @@ public class MySqlCompiler : Compiler
 
     public override string EngineCode { get; } = EngineCodes.MySql;
 
-    public override string? CompileLimit(SqlResult ctx)
+    public override void CompileLimit(SqlResult ctx)
     {
         var limit = ctx.Query.GetLimit(EngineCode);
         var offset = ctx.Query.GetOffset(EngineCode);
@@ -17,13 +20,19 @@ public class MySqlCompiler : Compiler
 
         if (offset == 0 && limit == 0)
         {
-            return null;
+            return;
         }
 
         if (offset == 0)
         {
-            ctx.Bindings.Add(limit);
-            return $"LIMIT {ParameterPlaceholder}";
+            var paramName = ctx.GetParamName();
+
+            ctx.NamedBindings.Add(paramName, limit);
+
+            ctx.SqlBuilder.Append(" LIMIT ")
+                .Append(paramName);
+
+            return;
         }
 
         if (limit == 0)
@@ -32,16 +41,27 @@ public class MySqlCompiler : Compiler
             // MySql will not accept offset without limit, so we will put a large number
             // to avoid this error.
 
-            ctx.Bindings.Add(offset);
-            return $"LIMIT 18446744073709551615 OFFSET {ParameterPlaceholder}";
+            var paramName = ctx.GetParamName();
+
+            ctx.NamedBindings.Add(paramName, offset);
+
+            ctx.SqlBuilder.Append(" LIMIT 18446744073709551615 OFFSET ")
+                .Append(paramName);
+
+            return;
         }
 
         // We have both values
 
-        ctx.Bindings.Add(limit);
-        ctx.Bindings.Add(offset);
+        var limitParamName = ctx.GetParamName();
+        var offsetParamName = ctx.GetParamName();
 
-        return $"LIMIT {ParameterPlaceholder} OFFSET {ParameterPlaceholder}";
+        ctx.NamedBindings.Add(limitParamName, limit);
+        ctx.NamedBindings.Add(offsetParamName, offset);
 
+        ctx.SqlBuilder.Append(" LIMIT ")
+            .Append(limitParamName)
+            .Append(" OFFSET ")
+            .Append(offsetParamName);
     }
 }
