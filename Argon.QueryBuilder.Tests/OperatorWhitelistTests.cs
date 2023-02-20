@@ -1,7 +1,7 @@
 using Argon.QueryBuilder;
 using Xunit;
 
-namespace SqlKata.Tests
+namespace Argon.QueryBuilder.Tests
 {
     public class OperatorWhitelistTests
     {

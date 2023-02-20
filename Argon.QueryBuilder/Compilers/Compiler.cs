@@ -46,16 +46,16 @@ public abstract partial class Compiler
 
     protected HashSet<string> UserOperators = new();
 
-    protected Dictionary<string, object> GenerateNamedBindings(object[] bindings)
-        => Helper.Flatten(bindings).Select((v, i) => new { i, v })
-        .ToDictionary(x => ParameterPrefix + x.i, x => x.v);
+    //protected Dictionary<string, object> GenerateNamedBindings(object[] bindings)
+    //    => Helper.Flatten(bindings).Select((v, i) => new { i, v })
+    //    .ToDictionary(x => ParameterPrefix + x.i, x => x.v);
 
-    protected SqlResult PrepareResult(SqlResult ctx)
-    {
-        ctx.NamedBindings = GenerateNamedBindings(ctx.Bindings.ToArray());
-        //ctx.Sql = Helper.ReplaceAll(ctx.RawSql, ParameterPlaceholder, i => ParameterPrefix + i);
-        return ctx;
-    }
+    //protected SqlResult PrepareResult(SqlResult ctx)
+    //{
+    //    ctx.NamedBindings = GenerateNamedBindings(ctx.Bindings.ToArray());
+    //    //ctx.Sql = Helper.ReplaceAll(ctx.RawSql, ParameterPlaceholder, i => ParameterPrefix + i);
+    //    return ctx;
+    //}
 
     private Query TransformAggregateQuery(Query query)
     {
@@ -103,7 +103,7 @@ public abstract partial class Compiler
             query = TransformAggregateQuery(query);
         }
 
-        ctx = CompileSelectQuery(query);
+        ctx = CompileQuery(query);
 
         // handle CTEs
         if (query.HasComponent(Component.Cte, EngineCode))
@@ -134,15 +134,9 @@ public abstract partial class Compiler
     }
 
     public virtual SqlResult Compile(Query query)
-    {
-        var ctx = CompileRaw(query);
+        => CompileRaw(query);
 
-        ctx = PrepareResult(ctx);
-
-        return ctx;
-    }
-
-    protected virtual SqlResult CompileSelectQuery(Query query)
+    protected virtual SqlResult CompileQuery(Query query)
     {
         var ctx = new SqlResult
         {
@@ -167,49 +161,49 @@ public abstract partial class Compiler
     protected virtual SqlResult CompileAdHocQuery(AdHocTableFromClause adHoc)
     {
         var ctx = new SqlResult();
-        var rowBuilder = new StringBuilder()
-            .Append("SELECT ");
+        //var rowBuilder = new StringBuilder()
+        //    .Append("SELECT ");
 
-        //    .Append(string.Join(", ", adHoc.Columns.Select(col => $"{ParameterPlaceholder} AS {Wrap(col)}")));
+        ////    .Append(string.Join(", ", adHoc.Columns.Select(col => $"{ParameterPlaceholder} AS {Wrap(col)}")));
 
-        var fromTable = SingleRowDummyTableName;
+        //var fromTable = SingleRowDummyTableName;
 
-        if (fromTable != null)
-        {
-            rowBuilder.Append(" FROM {fromTable}");
-        }
+        //if (fromTable != null)
+        //{
+        //    rowBuilder.Append(" FROM {fromTable}");
+        //}
 
-        var rows = string.Join(" UNION ALL ", Enumerable.Repeat(rowBuilder.ToString(), adHoc.Values.Count / adHoc.Columns.Count));
+        //var rows = string.Join(" UNION ALL ", Enumerable.Repeat(rowBuilder.ToString(), adHoc.Values.Count / adHoc.Columns.Count));
 
-        ctx.RawSql = rows;
-        ctx.Bindings = adHoc.Values;
+        //ctx.RawSql = rows;
+        //ctx.Bindings = adHoc.Values;
 
         return ctx;
     }
 
     protected virtual SqlResult CompileCteQuery(SqlResult ctx, Query query)
     {
-        var cteFinder = new CteFinder(query, EngineCode);
-        var cteSearchResult = cteFinder.Find();
+        //var cteFinder = new CteFinder(query, EngineCode);
+        //var cteSearchResult = cteFinder.Find();
 
-        var rawSql = new StringBuilder("WITH ");
-        var cteBindings = new List<object>();
+        //var rawSql = new StringBuilder("WITH ");
+        //var cteBindings = new List<object>();
 
-        foreach (var cte in cteSearchResult)
-        {
-            var cteCtx = CompileCte(cte);
+        //foreach (var cte in cteSearchResult)
+        //{
+        //    var cteCtx = CompileCte(cte);
 
-            cteBindings.AddRange(cteCtx.Bindings);
-            rawSql.Append(cteCtx.RawSql.Trim());
-            rawSql.Append(",\n");
-        }
+        //    cteBindings.AddRange(cteCtx.Bindings);
+        //    rawSql.Append(cteCtx.RawSql.Trim());
+        //    rawSql.Append(",\n");
+        //}
 
-        rawSql.Length -= 2; // remove last comma
-        rawSql.Append('\n');
-        rawSql.Append(ctx.RawSql);
+        //rawSql.Length -= 2; // remove last comma
+        //rawSql.Append('\n');
+        //rawSql.Append(ctx.RawSql);
 
-        ctx.Bindings.InsertRange(0, cteBindings);
-        ctx.RawSql = rawSql.ToString();
+        //ctx.Bindings.InsertRange(0, cteBindings);
+        //ctx.RawSql = rawSql.ToString();
 
         return ctx;
     }
@@ -227,14 +221,26 @@ public abstract partial class Compiler
 
         if (column is RawColumn raw)
         {
-            ctx.Bindings.AddRange(raw.Bindings);
+            foreach (var binding in raw.Bindings)
+            {
+                var paramName = ctx.GetParamName();
+                ctx.NamedBindings.Add(paramName, binding);
+            }
+
             ctx.SqlBuilder.Append(raw.Expression);
+
+            return;
         }
 
         if (column is QueryColumn queryColumn)
         {
-            var subCtx = CompileSelectQuery(queryColumn.Query);
-            ctx.Bindings.AddRange(subCtx.Bindings);
+            var subCtx = CompileQuery(queryColumn.Query);
+
+            foreach (var binding in subCtx.NamedBindings)
+            {
+                var paramName = ctx.GetParamName();
+                ctx.NamedBindings.Add(paramName, binding);
+            }
 
             ctx.SqlBuilder.Append('(')
                 .Append(subCtx.RawSql);
@@ -296,25 +302,25 @@ public abstract partial class Compiler
 
         CustomNullReferenceException.ThrowIfNull(cte.Alias);
 
-        if (cte is RawFromClause raw)
-        {
-            ctx.Bindings.AddRange(raw.Bindings);
-            ctx.RawSql = $"{WrapValue(raw.Alias!)} AS ({raw.Expression})";
-        }
-        else if (cte is QueryFromClause queryFromClause)
-        {
-            var subCtx = CompileSelectQuery(queryFromClause.Query);
-            ctx.Bindings.AddRange(subCtx.Bindings);
+        //if (cte is RawFromClause raw)
+        //{
+        //    ctx.Bindings.AddRange(raw.Bindings);
+        //    ctx.RawSql = $"{WrapValue(raw.Alias!)} AS ({raw.Expression})";
+        //}
+        //else if (cte is QueryFromClause queryFromClause)
+        //{
+        //    var subCtx = CompileSelectQuery(queryFromClause.Query);
+        //    ctx.Bindings.AddRange(subCtx.Bindings);
 
-            ctx.RawSql = $"{WrapValue(queryFromClause.Alias!)} AS ({subCtx.RawSql})";
-        }
-        else if (cte is AdHocTableFromClause adHoc)
-        {
-            var subCtx = CompileAdHocQuery(adHoc);
-            ctx.Bindings.AddRange(subCtx.Bindings);
+        //    ctx.RawSql = $"{WrapValue(queryFromClause.Alias!)} AS ({subCtx.RawSql})";
+        //}
+        //else if (cte is AdHocTableFromClause adHoc)
+        //{
+        //    var subCtx = CompileAdHocQuery(adHoc);
+        //    ctx.Bindings.AddRange(subCtx.Bindings);
 
-            ctx.RawSql = $"{WrapValue(adHoc.Alias!)} AS ({subCtx.RawSql})";
-        }
+        //    ctx.RawSql = $"{WrapValue(adHoc.Alias!)} AS ({subCtx.RawSql})";
+        //}
 
         return ctx;
     }
@@ -388,7 +394,7 @@ public abstract partial class Compiler
                     ctx.SqlBuilder.Append(' ').Append(combineClause.Operation.ToUpperInvariant())
                         .Append(combineClause.All ? " ALL " : " ");
 
-                    var subCtx = CompileSelectQuery(combineClause.Query);
+                    var subCtx = CompileQuery(combineClause.Query);
 
                     foreach (var binding in subCtx.NamedBindings)
                     {
@@ -420,15 +426,24 @@ public abstract partial class Compiler
         switch (from)
         {
             case RawFromClause raw:
-                ctx.Bindings.AddRange(raw.Bindings);
+                foreach (var binding in raw.Bindings)
+                {
+                    var paramName = ctx.GetParamName();
+                    ctx.NamedBindings.Add(paramName, binding);
+                }
+
                 ctx.SqlBuilder.Append(raw.Expression);
                 break;
             case QueryFromClause queryFromClause:
                 var fromQuery = queryFromClause.Query;
 
-                var subCtx = CompileSelectQuery(fromQuery);
+                var subCtx = CompileQuery(fromQuery);
 
-                ctx.Bindings.AddRange(subCtx.Bindings);
+                foreach (var binding in subCtx.NamedBindings)
+                {
+                    var paramName = ctx.GetParamName();
+                    ctx.NamedBindings.Add(paramName, binding);
+                }
 
                 ctx.SqlBuilder.Append('(')
                     .Append(subCtx.RawSql)
@@ -564,7 +579,11 @@ public abstract partial class Compiler
 
                 if (x is RawOrderBy raw)
                 {
-                    ctx.Bindings.AddRange(raw.Bindings);
+                    foreach (var binding in raw.Bindings)
+                    {
+                        var paramName = ctx.GetParamName();
+                        ctx.NamedBindings.Add(paramName, binding);
+                    }
                     return raw.Expression;
                 }
 

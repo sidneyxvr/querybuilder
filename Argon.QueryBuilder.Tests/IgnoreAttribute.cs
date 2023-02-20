@@ -1,4 +1,4 @@
-namespace SqlKata.Tests;
+namespace Argon.QueryBuilder.Tests;
 
 /// <summary>
 /// This class is used as metadata to ignore a property on insert and update queries

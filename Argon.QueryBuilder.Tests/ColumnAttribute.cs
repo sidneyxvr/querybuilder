@@ -1,4 +1,4 @@
-namespace SqlKata.Tests;
+namespace Argon.QueryBuilder.Tests;
 
 /// <summary>
 /// This class is used as metadata on a property to generate different name in the output query.

@@ -14,11 +14,20 @@ public partial class Compiler
             case BasicDateCondition basicDateCondition:
                 CompileBasicDateCondition(ctx, basicDateCondition);
                 break;
+            case BasicCondition basicCondition:
+                CompileBasicCondition(ctx, basicCondition);
+                break;
             case TwoColumnsCondition twoColumnsCondition:
                 CompileTwoColumnsCondition(ctx, twoColumnsCondition);
                 break;
             case BooleanCondition booleanCondition:
                 CompileBooleanCondition(ctx, booleanCondition);
+                break;
+            case NullCondition nullCondition:
+                CompileNullCondition(ctx, nullCondition);
+                break;
+            case ExistsCondition existsCondition:
+                CompileExistsCondition(ctx, existsCondition);
                 break;
             default:
                 throw new Exception();
@@ -29,49 +38,64 @@ public partial class Compiler
     {
         for (var i = 0; i < conditions.Count; i++)
         {
-            CompileCondition(ctx, conditions[i]);
-
             if (i != 0)
             {
                 ctx.SqlBuilder.Append(conditions[i].IsOr ? " OR " : " AND ");
             }
+
+            CompileCondition(ctx, conditions[i]);
         }
     }
 
     protected virtual string CompileRawCondition(SqlResult ctx, RawCondition x)
     {
-        ctx.Bindings.AddRange(x.Bindings);
+        foreach (var binding in x.Bindings)
+        {
+            var paramName = ctx.GetParamName();
+            ctx.NamedBindings.Add(paramName, binding);
+        }
+
         return x.Expression;
     }
 
     protected virtual string CompileQueryCondition<T>(SqlResult ctx, QueryCondition<T> x) where T : BaseQuery<T>
     {
-        var subCtx = CompileSelectQuery(x.Query);
+        var subCtx = CompileQuery(x.Query);
 
-        ctx.Bindings.AddRange(subCtx.Bindings);
+        foreach (var binding in subCtx.NamedBindings)
+        {
+            var paramName = ctx.GetParamName();
+            ctx.NamedBindings.Add(paramName, binding);
+        }
 
         return Wrap(x.Column) + " " + CheckOperator(x.Operator) + " (" + subCtx.RawSql + ")";
     }
 
     protected virtual string CompileSubQueryCondition<T>(SqlResult ctx, SubQueryCondition<T> x) where T : BaseQuery<T>
     {
-        var subCtx = CompileSelectQuery(x.Query);
+        var subCtx = CompileQuery(x.Query);
 
-        ctx.Bindings.AddRange(subCtx.Bindings);
+        foreach (var binding in subCtx.NamedBindings)
+        {
+            var paramName = ctx.GetParamName();
+            ctx.NamedBindings.Add(paramName, binding);
+        }
 
         return "(" + subCtx.RawSql + ") " + CheckOperator(x.Operator) + " " + Parameter(ctx, x.Value);
     }
 
-    protected virtual string CompileBasicCondition(SqlResult ctx, BasicCondition x)
+    protected virtual void CompileBasicCondition(SqlResult ctx, BasicCondition x)
     {
-        var sql = $"{Wrap(x.Column)} {CheckOperator(x.Operator)} {Parameter(ctx, x.Value)}";
-
         if (x.IsNot)
         {
-            return $"NOT ({sql})";
+            ctx.SqlBuilder.Append("NOT ");
         }
 
-        return sql;
+        ctx.SqlBuilder.Append(Wrap(x.Column))
+            .Append(' ')
+            .Append(CheckOperator(x.Operator))
+            .Append(' ')
+            .Append(Parameter(ctx, x.Value));
     }
 
     protected virtual void CompileBasicStringCondition(SqlResult ctx, BasicStringCondition x)
@@ -246,19 +270,23 @@ public partial class Compiler
 
     protected virtual string CompileInQueryCondition(SqlResult ctx, InQueryCondition item)
     {
-        var subCtx = CompileSelectQuery(item.Query);
+        var subCtx = CompileQuery(item.Query);
 
-        ctx.Bindings.AddRange(subCtx.Bindings);
+        foreach (var binding in subCtx.NamedBindings)
+        {
+            var paramName = ctx.GetParamName();
+            ctx.NamedBindings.Add(paramName, binding);
+        }
 
         var inOperator = item.IsNot ? "NOT IN" : "IN";
 
         return Wrap(item.Column) + $" {inOperator} ({subCtx.RawSql})";
     }
 
-    protected virtual string CompileNullCondition(SqlResult ctx, NullCondition item)
+    protected virtual void CompileNullCondition(SqlResult ctx, NullCondition item)
     {
-        var op = item.IsNot ? "IS NOT NULL" : "IS NULL";
-        return Wrap(item.Column) + " " + op;
+        ctx.SqlBuilder.Append(Wrap(item.Column))
+            .Append(item.IsNot ? " IS NOT NULL" : " IS NULL");
     }
 
     protected virtual void CompileBooleanCondition(SqlResult ctx, BooleanCondition item)
@@ -266,9 +294,9 @@ public partial class Compiler
             .Append(item.IsNot ? " != " : " = ")
             .Append(item.Value ? CompileTrue() : CompileFalse());
 
-    protected virtual string CompileExistsCondition(SqlResult ctx, ExistsCondition item)
+    protected virtual void CompileExistsCondition(SqlResult ctx, ExistsCondition item)
     {
-        var op = item.IsNot ? "NOT EXISTS" : "EXISTS";
+        ctx.SqlBuilder.Append(item.IsNot ? "NOT EXISTS " : "EXISTS ");
 
         // remove unneeded components
         var query = item.Query.Clone();
@@ -278,10 +306,17 @@ public partial class Compiler
             query.ClearComponent(Component.Select).SelectRaw("1");
         }
 
-        var subCtx = CompileSelectQuery(query);
+        ctx.SqlBuilder.Append('(');
 
-        ctx.Bindings.AddRange(subCtx.Bindings);
+        var subCtx = CompileQuery(query);
 
-        return $"{op} ({subCtx.RawSql})";
+        foreach (var binding in subCtx.NamedBindings)
+        {
+            var paramName = ctx.GetParamName();
+            ctx.NamedBindings.Add(paramName, binding);
+        }
+
+        ctx.SqlBuilder.Append(subCtx.RawSql)
+            .Append(')');
     }
 }

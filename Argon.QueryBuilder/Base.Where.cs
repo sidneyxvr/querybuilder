@@ -39,7 +39,7 @@ public abstract partial class BaseQuery<Q>
     public Q WhereNot(string column, string op, object value)
         => Not().Where(column, op, value);
 
-    public Q OrWhere(string column, string op, object value)
+    public Q OrWhere(string column, string op, object? value)
         => Or().Where(column, op, value);
 
     public Q OrWhereNot(string column, string op, object value)
@@ -51,7 +51,7 @@ public abstract partial class BaseQuery<Q>
     public Q WhereNot(string column, object value)
         => WhereNot(column, "=", value);
 
-    public Q OrWhere(string column, object value)
+    public Q OrWhere(string column, object? value)
         => OrWhere(column, "=", value);
 
     public Q OrWhereNot(string column, object value)

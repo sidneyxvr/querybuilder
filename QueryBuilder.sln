@@ -15,6 +15,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Argon.QueryBuilder.MySql", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Argon.QueryBuilder.Tests", "Argon.QueryBuilder.Tests\Argon.QueryBuilder.Tests.csproj", "{0C304A2F-8535-4540-9ABD-4A45CCC7E2C8}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{29EE9119-7BE3-4357-A1DB-4EB4C2E26B13}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{ED4CEFC3-0821-41E7-AC8B-22D65E634C5C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Argon.QueryBuilder.MySql.Tests", "Argon.QueryBuilder.MySql.Tests\Argon.QueryBuilder.MySql.Tests.csproj", "{4CBEAB3E-9151-4D61-ABC7-20799F39265A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,9 +43,19 @@ Global
 		{0C304A2F-8535-4540-9ABD-4A45CCC7E2C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0C304A2F-8535-4540-9ABD-4A45CCC7E2C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0C304A2F-8535-4540-9ABD-4A45CCC7E2C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4CBEAB3E-9151-4D61-ABC7-20799F39265A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CBEAB3E-9151-4D61-ABC7-20799F39265A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CBEAB3E-9151-4D61-ABC7-20799F39265A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CBEAB3E-9151-4D61-ABC7-20799F39265A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FA498B25-3F51-4891-81FC-732D3FA9BED0} = {29EE9119-7BE3-4357-A1DB-4EB4C2E26B13}
+		{FE2F682D-7555-4E35-B7DA-68CB38668D16} = {29EE9119-7BE3-4357-A1DB-4EB4C2E26B13}
+		{0C304A2F-8535-4540-9ABD-4A45CCC7E2C8} = {ED4CEFC3-0821-41E7-AC8B-22D65E634C5C}
+		{4CBEAB3E-9151-4D61-ABC7-20799F39265A} = {ED4CEFC3-0821-41E7-AC8B-22D65E634C5C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8FFC834B-6CAA-409C-8E6A-43D4FB187669}

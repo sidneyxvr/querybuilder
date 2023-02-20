@@ -1,9 +1,17 @@
 using Argon.QueryBuilder.Clauses;
+using System.Text.RegularExpressions;
 
 namespace Argon.QueryBuilder;
 
 public partial class Query
 {
+    [GeneratedRegex(@"^(?:\w+\.){1,2}{(.*)}")]
+    private static partial Regex ExpandRegex();
+
+
+    [GeneratedRegex("\\s*,\\s*")]
+    private static partial Regex ColumnRegex();
+
     public Query Select(params string[] columns)
         => Select(columns.AsEnumerable());
 
@@ -12,7 +20,7 @@ public partial class Query
         Method = "select";
 
         columns = columns
-            .Select(x => Helper.ExpandExpression(x))
+            .Select(x => ExpandExpression(x))
             .SelectMany(x => x)
             .ToArray();
 
@@ -94,4 +102,25 @@ public partial class Query
 
     public Query SelectMax(string column, Func<Query, Query>? filter = null)
         => SelectAggregate("max", column, filter);
+
+    private static List<string> ExpandExpression(string expression)
+    {
+        var match = ExpandRegex().Match(expression);
+
+        if (!match.Success)
+        {
+            // we did not found a match return the string as is.
+            return new List<string>(1) { expression };
+        }
+
+        var table = expression[..expression.IndexOf(".{")];
+
+        var captures = match.Groups[1].Value;
+
+        var cols = ColumnRegex().Split(captures)
+            .Select(x => $"{table}.{x.Trim()}")
+            .ToList();
+
+        return cols;
+    }
 }

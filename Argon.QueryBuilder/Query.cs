@@ -274,7 +274,7 @@ public partial class Query : BaseQuery<Query>
             new RawOrderBy
             {
                 Expression = expression,
-                Bindings = Helper.Flatten(bindings).ToArray()
+                Bindings = bindings // Helper.Flatten(bindings).ToArray()
             });
 
     public Query OrderByRandom()
