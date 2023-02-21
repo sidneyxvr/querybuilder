@@ -25,6 +25,6 @@ public abstract class TestBase
     {
         var query = _compiledQueries.GetValueOrDefault(testMethodName)!;
 
-        Assert.Equal(sql, query.RawSql);
+        Assert.Equal(sql, query.SqlBuilder.ToString());
     }
 }

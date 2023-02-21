@@ -23,7 +23,6 @@ public class OffsetClause : AbstractClause
     public override AbstractClause Clone()
         => new OffsetClause
         {
-            Engine = Engine,
             Offset = Offset,
             Component = Component
         };

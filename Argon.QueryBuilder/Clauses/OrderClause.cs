@@ -14,7 +14,6 @@ public class OrderBy : AbstractOrderBy
     public override AbstractClause Clone()
         => new OrderBy
         {
-            Engine = Engine,
             Component = Component,
             Column = Column,
             Ascending = Ascending
@@ -30,7 +29,6 @@ public class RawOrderBy : AbstractOrderBy
     public override AbstractClause Clone()
         => new RawOrderBy
         {
-            Engine = Engine,
             Component = Component,
             Expression = Expression,
             Bindings = Bindings
@@ -43,6 +41,5 @@ public class OrderByRandom : AbstractOrderBy
     public override AbstractClause Clone()
         => new OrderByRandom
         {
-            Engine = Engine,
         };
 }

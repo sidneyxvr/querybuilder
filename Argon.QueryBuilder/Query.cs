@@ -1,5 +1,4 @@
 using Argon.QueryBuilder.Clauses;
-using Argon.QueryBuilder.Exceptions;
 using System.Collections.Concurrent;
 using System.Reflection;
 
@@ -26,25 +25,19 @@ public partial class Query : BaseQuery<Query>
 
     public string GetComment() => _comment ?? "";
 
-    public bool HasOffset(string? engineCode = null) => GetOffset(engineCode) > 0;
+    public bool HasOffset() => GetOffset() > 0;
 
-    public bool HasLimit(string? engineCode = null) => GetLimit(engineCode) > 0;
+    public bool HasLimit() => GetLimit() > 0;
 
-    public long GetOffset(string? engineCode = null)
+    public long GetOffset()
     {
-        engineCode ??= EngineScope;
-        var offset = GetOneComponent<OffsetClause>(Component.Offset, engineCode);
+        var offset = GetOneComponent<OffsetClause>(Component.Offset);
 
         return offset?.Offset ?? 0;
     }
 
-    public int GetLimit(string? engineCode = null)
-    {
-        engineCode ??= EngineScope;
-        var limit = GetOneComponent<LimitClause>(Component.Limit, engineCode);
-
-        return limit?.Limit ?? 0;
-    }
+    public int GetLimit()
+        => GetOneComponent<LimitClause>(Component.Limit)?.Limit ?? 0;
 
     public override Query Clone()
     {
@@ -96,9 +89,7 @@ public partial class Query : BaseQuery<Query>
 
         query = query.Clone();
 
-        CustomNullReferenceException.ThrowIfNull(query.QueryAlias);
-
-        var alias = query.QueryAlias.Trim();
+        var alias = query.QueryAlias!.Trim();
 
         // clear the query alias
         query.QueryAlias = null;

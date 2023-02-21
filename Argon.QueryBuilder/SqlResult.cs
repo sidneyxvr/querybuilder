@@ -7,7 +7,6 @@ public class SqlResult
     public StringBuilder SqlBuilder { get; set; } = new StringBuilder();
     public Query Query { get; set; } = null!;
     public string RawSql { get; set; } = "";
-    public string Sql { get; set; } = "";
 
     public Dictionary<string, object> NamedBindings = new();
 
@@ -15,4 +14,10 @@ public class SqlResult
 
     public string GetParamName()
         => $"@p{index++}";
+
+    public void AddParam(object value)
+        => NamedBindings.Add(GetParamName(), value);
+
+    public void AddParams(object value)
+        => NamedBindings.Add(GetParamName(), value);
 }

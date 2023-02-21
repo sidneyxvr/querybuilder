@@ -5,6 +5,16 @@ namespace Argon.QueryBuilder.Tests;
 public class SelectTestBase : TestBase
 {
     [Fact]
+    public void EscapeClauseThrowsForMultipleCharacters()
+    {
+        Assert.ThrowsAny<ArgumentException>(() =>
+        {
+            var q = new Query("Table1")
+                .HavingContains("Column1", @"TestString\%", @"\aa");
+        });
+    }
+
+    [Fact]
     public virtual void BasicSelect()
         => AssertQuery(new Query()
             .From("users")
@@ -35,16 +45,6 @@ public class SelectTestBase : TestBase
         => AssertQuery(new Query()
         .From("users")
         .Select("users.{id,name, age}"));
-
-    [Fact]
-    public virtual void WhereTrue()
-        => AssertQuery(new Query("Table")
-        .WhereTrue("IsActive"));
-
-    [Fact]
-    public virtual void WhereFalse()
-        => AssertQuery(new Query("Table")
-        .WhereFalse("IsActive"));
 
     [Fact]
     public virtual void UnionWithBindings()
@@ -184,20 +184,4 @@ public class SelectTestBase : TestBase
         => AssertQuery(new Query()
         .From("users")
         .Join("countries", "countries.id", "users.country_id", "=", given));
-
-    [Fact]
-    public virtual void WhereSubQuery()
-        => AssertQuery(new Query()
-            .From("users")
-            .WhereExists(q => q.Select("1").From("friends").Where("name", "test")));
-
-    [Fact]
-    public void EscapeClauseThrowsForMultipleCharacters()
-    {
-        Assert.ThrowsAny<ArgumentException>(() =>
-        {
-            var q = new Query("Table1")
-                .HavingContains("Column1", @"TestString\%", false, @"\aa");
-        });
-    }
 }

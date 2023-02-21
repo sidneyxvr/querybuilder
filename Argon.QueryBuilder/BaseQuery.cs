@@ -1,4 +1,5 @@
 using Argon.QueryBuilder.Clauses;
+using System.Linq;
 
 namespace Argon.QueryBuilder;
 
@@ -66,11 +67,8 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="clause"></param>
     /// <param name="engineCode"></param>
     /// <returns></returns>
-    public Q AddComponent(Component component, AbstractClause clause, string? engineCode = null)
+    public Q AddComponent(Component component, AbstractClause clause)
     {
-        engineCode ??= EngineScope;
-
-        clause.Engine = engineCode;
         clause.Component = component;
         Clauses.Add(clause);
 
@@ -86,30 +84,24 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="clause"></param>
     /// <param name="engineCode"></param>
     /// <returns></returns>
-    public Q AddOrReplaceComponent(Component component, AbstractClause clause, string? engineCode = null)
+    public Q AddOrReplaceComponent(Component component, AbstractClause clause)
     {
-        engineCode ??= EngineScope;
+        var current = GetComponents(component).SingleOrDefault();
 
-        var current = GetComponents(component).SingleOrDefault(c => c.Engine == engineCode);
         if (current != null)
             Clauses.Remove(current);
 
-        return AddComponent(component, clause, engineCode);
+        return AddComponent(component, clause);
     }
-
-
 
     /// <summary>
     /// Get the list of clauses for a component.
     /// </summary>
     /// <returns></returns>
-    public List<C> GetComponents<C>(Component component, string? engineCode = null) where C : AbstractClause
+    public List<C> GetComponents<C>(Component component) where C : AbstractClause
     {
-        engineCode ??= EngineScope;
-
         var clauses = Clauses
             .Where(x => x.Component == component)
-            .Where(x => engineCode == null || x.Engine == null || engineCode == x.Engine)
             .Cast<C>();
 
         return clauses.ToList();
@@ -121,24 +113,15 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="component"></param>
     /// <param name="engineCode"></param>
     /// <returns></returns>
-    public List<AbstractClause> GetComponents(Component component, string? engineCode = null)
-    {
-        engineCode ??= EngineScope;
-
-        return GetComponents<AbstractClause>(component, engineCode);
-    }
+    public List<AbstractClause> GetComponents(Component component)
+        => GetComponents<AbstractClause>(component);
 
     /// <summary>
     /// Get a single component clause from the query.
     /// </summary>
     /// <returns></returns>
-    public C? GetOneComponent<C>(Component component, string? engineCode = null) where C : AbstractClause
-    {
-        engineCode ??= EngineScope;
-
-        var all = GetComponents<C>(component, engineCode);
-        return all.FirstOrDefault(c => c.Engine == engineCode) ?? all.FirstOrDefault(c => c.Engine == null);
-    }
+    public C? GetOneComponent<C>(Component component) where C : AbstractClause
+        => GetComponents<C>(component).FirstOrDefault();
 
     /// <summary>
     /// Get a single component clause from the query.
@@ -146,12 +129,8 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="component"></param>
     /// <param name="engineCode"></param>
     /// <returns></returns>
-    public AbstractClause? GetOneComponent(Component component, string? engineCode = null)
-    {
-        engineCode ??= EngineScope;
-
-        return GetOneComponent<AbstractClause>(component, engineCode);
-    }
+    public AbstractClause? GetOneComponent(Component component)
+        => GetOneComponent<AbstractClause>(component);
 
     /// <summary>
     /// Return whether the query has clauses for a component.
@@ -159,12 +138,8 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="component"></param>
     /// <param name="engineCode"></param>
     /// <returns></returns>
-    public bool HasComponent(Component component, string? engineCode = null)
-    {
-        engineCode ??= EngineScope;
-
-        return GetComponents(component, engineCode).Any();
-    }
+    public bool HasComponent(Component component)
+        => GetComponents(component).Any();
 
     /// <summary>
     /// Remove all clauses for a component.
@@ -172,12 +147,10 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="component"></param>
     /// <param name="engineCode"></param>
     /// <returns></returns>
-    public Q ClearComponent(Component component, string? engineCode = null)
+    public Q ClearComponent(Component component)
     {
-        engineCode ??= EngineScope;
-
         Clauses = Clauses
-            .Where(x => !(x.Component == component && (engineCode == null || x.Engine == null || engineCode == x.Engine)))
+            .Where(x => x.Component != component)
             .ToList();
 
         return (Q)this;

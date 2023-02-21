@@ -34,7 +34,6 @@ public class Combine : AbstractCombine
     public override AbstractClause Clone()
         => new Combine
         {
-            Engine = Engine,
             Operation = Operation,
             Component = Component,
             Query = Query,
@@ -51,7 +50,6 @@ public class RawCombine : AbstractCombine
     public override AbstractClause Clone()
         => new RawCombine
         {
-            Engine = Engine,
             Component = Component,
             Expression = Expression,
             Bindings = Bindings

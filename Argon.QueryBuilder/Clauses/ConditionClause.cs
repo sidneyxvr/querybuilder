@@ -19,7 +19,6 @@ public class BasicCondition : AbstractCondition
     public override AbstractClause Clone()
         => new BasicCondition
         {
-            Engine = Engine,
             Column = Column,
             Operator = Operator,
             Value = Value,
@@ -31,8 +30,6 @@ public class BasicCondition : AbstractCondition
 
 public class BasicStringCondition : BasicCondition
 {
-    public bool CaseSensitive { get; set; } = false;
-
     private string? _escapeCharacter = null;
     public string? EscapeCharacter
     {
@@ -50,13 +47,11 @@ public class BasicStringCondition : BasicCondition
     public override AbstractClause Clone()
         => new BasicStringCondition
         {
-            Engine = Engine,
             Column = Column,
             Operator = Operator,
             Value = Value,
             IsOr = IsOr,
             IsNot = IsNot,
-            CaseSensitive = CaseSensitive,
             EscapeCharacter = EscapeCharacter,
             Component = Component,
         };
@@ -70,7 +65,6 @@ public class BasicDateCondition : BasicCondition
     public override AbstractClause Clone()
     => new BasicDateCondition
     {
-        Engine = Engine,
         Column = Column,
         Operator = Operator,
         Value = Value,
@@ -94,7 +88,6 @@ public class TwoColumnsCondition : AbstractCondition
     public override AbstractClause Clone()
         => new TwoColumnsCondition
         {
-            Engine = Engine,
             First = First,
             Operator = Operator,
             Second = Second,
@@ -117,7 +110,6 @@ public class QueryCondition<T> : AbstractCondition where T : BaseQuery<T>
     public override AbstractClause Clone()
         => new QueryCondition<T>
         {
-            Engine = Engine,
             Column = Column,
             Operator = Operator,
             Query = Query.Clone(),
@@ -140,7 +132,6 @@ public class SubQueryCondition<T> : AbstractCondition where T : BaseQuery<T>
     public override AbstractClause Clone()
     => new SubQueryCondition<T>
     {
-        Engine = Engine,
         Value = Value,
         Operator = Operator,
         Query = Query.Clone(),
@@ -160,7 +151,6 @@ public class InCondition<T> : AbstractCondition
     public override AbstractClause Clone()
         => new InCondition<T>
         {
-            Engine = Engine,
             Column = Column,
             Values = new List<T>(Values),
             IsOr = IsOr,
@@ -179,7 +169,6 @@ public class InQueryCondition : AbstractCondition
     public override AbstractClause Clone()
         => new InQueryCondition
         {
-            Engine = Engine,
             Column = Column,
             Query = Query.Clone(),
             IsOr = IsOr,
@@ -200,7 +189,6 @@ public class BetweenCondition<T> : AbstractCondition
     public override AbstractClause Clone()
         => new BetweenCondition<T>
         {
-            Engine = Engine,
             Column = Column,
             Higher = Higher,
             Lower = Lower,
@@ -221,7 +209,6 @@ public class NullCondition : AbstractCondition
     public override AbstractClause Clone()
         => new NullCondition
         {
-            Engine = Engine,
             Column = Column,
             IsOr = IsOr,
             IsNot = IsNot,
@@ -241,7 +228,6 @@ public class BooleanCondition : AbstractCondition
     public override AbstractClause Clone()
         => new BooleanCondition
         {
-            Engine = Engine,
             Column = Column,
             IsOr = IsOr,
             IsNot = IsNot,
@@ -260,7 +246,6 @@ public class NestedCondition<T> : AbstractCondition where T : BaseQuery<T>
     public override AbstractClause Clone()
         => new NestedCondition<T>
         {
-            Engine = Engine,
             Query = Query.Clone(),
             IsOr = IsOr,
             IsNot = IsNot,
@@ -279,26 +264,7 @@ public class ExistsCondition : AbstractCondition
     public override AbstractClause Clone()
         => new ExistsCondition
         {
-            Engine = Engine,
             Query = Query.Clone(),
-            IsOr = IsOr,
-            IsNot = IsNot,
-            Component = Component
-        };
-}
-
-public class RawCondition : AbstractCondition
-{
-    public required string Expression { get; set; }
-    public required object[] Bindings { set; get; }
-
-    /// <inheritdoc />
-    public override AbstractClause Clone()
-        => new RawCondition
-        {
-            Engine = Engine,
-            Expression = Expression,
-            Bindings = Bindings,
             IsOr = IsOr,
             IsNot = IsNot,
             Component = Component

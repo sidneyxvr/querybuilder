@@ -26,7 +26,6 @@ public class AggregateClause : AbstractClause
     public override AbstractClause Clone()
         => new AggregateClause
         {
-            Engine = Engine,
             Type = Type,
             Columns = new List<string>(Columns),
             Component = Component,

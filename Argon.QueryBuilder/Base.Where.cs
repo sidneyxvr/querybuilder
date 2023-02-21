@@ -1,6 +1,5 @@
-using System.Reflection;
 using Argon.QueryBuilder.Clauses;
-using Argon.QueryBuilder.Exceptions;
+using System.Reflection;
 
 namespace Argon.QueryBuilder;
 
@@ -70,9 +69,7 @@ public abstract partial class BaseQuery<Q>
         {
             var currentItem = item.GetValue(constraints);
 
-            CustomNullReferenceException.ThrowIfNull(currentItem);
-
-            dictionary.Add(item.Name, currentItem);
+            dictionary.Add(item.Name, currentItem!);
         }
 
         return Where(dictionary);
@@ -100,19 +97,6 @@ public abstract partial class BaseQuery<Q>
 
         return query;
     }
-
-    public Q WhereRaw(string sql, params object[] bindings)
-        => AddComponent(Component.Where,
-        new RawCondition
-        {
-            Expression = sql,
-            Bindings = bindings,
-            IsOr = GetOr(),
-            IsNot = GetNot(),
-        });
-
-    public Q OrWhereRaw(string sql, params object[] bindings)
-        => Or().WhereRaw(sql, bindings);
 
     /// <summary>
     /// Apply a nested where clause
@@ -204,93 +188,89 @@ public abstract partial class BaseQuery<Q>
     public Q OrWhereFalse(string column)
         => Or().WhereFalse(column);
 
-    public Q WhereLike(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
+    public Q WhereLike(string column, object value, string? escapeCharacter = null)
         => AddComponent(Component.Where,
         new BasicStringCondition
         {
             Operator = "like",
             Column = column,
             Value = value,
-            CaseSensitive = caseSensitive,
             EscapeCharacter = escapeCharacter,
             IsOr = GetOr(),
             IsNot = GetNot(),
         });
 
-    public Q WhereNotLike(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Not().WhereLike(column, value, caseSensitive, escapeCharacter);
+    public Q WhereNotLike(string column, object value, string? escapeCharacter = null)
+        => Not().WhereLike(column, value,  escapeCharacter);
 
-    public Q OrWhereLike(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Or().WhereLike(column, value, caseSensitive, escapeCharacter);
+    public Q OrWhereLike(string column, object value, string? escapeCharacter = null)
+        => Or().WhereLike(column, value, escapeCharacter);
 
-    public Q OrWhereNotLike(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Or().Not().WhereLike(column, value, caseSensitive, escapeCharacter);
+    public Q OrWhereNotLike(string column, object value, string? escapeCharacter = null)
+        => Or().Not().WhereLike(column, value, escapeCharacter);
 
-    public Q WhereStarts(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
+    public Q WhereStarts(string column, object value, string? escapeCharacter = null)
         => AddComponent(Component.Where,
         new BasicStringCondition
         {
             Operator = "starts",
             Column = column,
             Value = value,
-            CaseSensitive = caseSensitive,
             EscapeCharacter = escapeCharacter,
             IsOr = GetOr(),
             IsNot = GetNot(),
         });
 
-    public Q WhereNotStarts(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Not().WhereStarts(column, value, caseSensitive, escapeCharacter);
+    public Q WhereNotStarts(string column, object value, string? escapeCharacter = null)
+        => Not().WhereStarts(column, value, escapeCharacter);
 
-    public Q OrWhereStarts(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Or().WhereStarts(column, value, caseSensitive, escapeCharacter);
+    public Q OrWhereStarts(string column, object value, string? escapeCharacter = null)
+        => Or().WhereStarts(column, value, escapeCharacter);
 
-    public Q OrWhereNotStarts(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Or().Not().WhereStarts(column, value, caseSensitive, escapeCharacter);
+    public Q OrWhereNotStarts(string column, object value, string? escapeCharacter = null)
+        => Or().Not().WhereStarts(column, value, escapeCharacter);
 
-    public Q WhereEnds(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
+    public Q WhereEnds(string column, object value, string? escapeCharacter = null)
         => AddComponent(Component.Where,
         new BasicStringCondition
         {
             Operator = "ends",
             Column = column,
             Value = value,
-            CaseSensitive = caseSensitive,
             EscapeCharacter = escapeCharacter,
             IsOr = GetOr(),
             IsNot = GetNot()
         });
 
-    public Q WhereNotEnds(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Not().WhereEnds(column, value, caseSensitive, escapeCharacter);
+    public Q WhereNotEnds(string column, object value, string? escapeCharacter = null)
+        => Not().WhereEnds(column, value, escapeCharacter);
 
-    public Q OrWhereEnds(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Or().WhereEnds(column, value, caseSensitive, escapeCharacter);
+    public Q OrWhereEnds(string column, object value, string? escapeCharacter = null)
+        => Or().WhereEnds(column, value, escapeCharacter);
 
-    public Q OrWhereNotEnds(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Or().Not().WhereEnds(column, value, caseSensitive, escapeCharacter);
+    public Q OrWhereNotEnds(string column, object value, string? escapeCharacter = null)
+        => Or().Not().WhereEnds(column, value, escapeCharacter);
 
-    public Q WhereContains(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
+    public Q WhereContains(string column, object value, string? escapeCharacter = null)
         => AddComponent(Component.Where,
         new BasicStringCondition
         {
             Operator = "contains",
             Column = column,
             Value = value,
-            CaseSensitive = caseSensitive,
             EscapeCharacter = escapeCharacter,
             IsOr = GetOr(),
             IsNot = GetNot()
         });
 
-    public Q WhereNotContains(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Not().WhereContains(column, value, caseSensitive, escapeCharacter);
+    public Q WhereNotContains(string column, object value, string? escapeCharacter = null)
+        => Not().WhereContains(column, value, escapeCharacter);
 
-    public Q OrWhereContains(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Or().WhereContains(column, value, caseSensitive, escapeCharacter);
+    public Q OrWhereContains(string column, object value, string? escapeCharacter = null)
+        => Or().WhereContains(column, value, escapeCharacter);
 
-    public Q OrWhereNotContains(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Or().Not().WhereContains(column, value, caseSensitive, escapeCharacter);
+    public Q OrWhereNotContains(string column, object value, string? escapeCharacter = null)
+        => Or().Not().WhereContains(column, value, escapeCharacter);
 
     public Q WhereBetween<T>(string column, T lower, T higher)
         where T : notnull

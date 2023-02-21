@@ -9,12 +9,10 @@ public class MySqlCompiler : Compiler
         OpeningIdentifier = ClosingIdentifier = "`";
     }
 
-    public override string EngineCode { get; } = EngineCodes.MySql;
-
     public override void CompileLimit(SqlResult ctx)
     {
-        var limit = ctx.Query.GetLimit(EngineCode);
-        var offset = ctx.Query.GetOffset(EngineCode);
+        var limit = ctx.Query.GetLimit();
+        var offset = ctx.Query.GetOffset();
 
 
         if (offset == 0 && limit == 0)
@@ -63,4 +61,10 @@ public class MySqlCompiler : Compiler
             .Append(" OFFSET ")
             .Append(offsetParamName);
     }
+
+    protected override string CompileFalse()
+        => "0";
+
+    protected override string CompileTrue()
+        => "1";
 }

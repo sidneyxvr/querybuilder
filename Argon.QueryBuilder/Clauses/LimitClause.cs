@@ -23,7 +23,6 @@ public class LimitClause : AbstractClause
     public override AbstractClause Clone()
         => new LimitClause
         {
-            Engine = Engine,
             Limit = Limit,
             Component = Component
         };

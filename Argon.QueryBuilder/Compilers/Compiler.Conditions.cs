@@ -1,9 +1,12 @@
 using Argon.QueryBuilder.Clauses;
+using System.Reflection;
 
 namespace Argon.QueryBuilder.Compilers;
 
 public partial class Compiler
 {
+    private static readonly Dictionary<string, MethodInfo> _methods = new();
+
     protected virtual void CompileCondition(SqlResult ctx, AbstractCondition clause)
     {
         switch (clause)
@@ -29,8 +32,42 @@ public partial class Compiler
             case ExistsCondition existsCondition:
                 CompileExistsCondition(ctx, existsCondition);
                 break;
+            case InCondition<int> inCondition:
+                CompileInCondition(ctx, inCondition);
+                break;
+            case BetweenCondition<DateTime> betweenCondition:
+                CompileBetweenCondition(ctx, betweenCondition);
+                break;
+            case QueryCondition<Query> queryCondition:
+                CompileQueryCondition(ctx, queryCondition);
+                break;
+            case SubQueryCondition<Query> subQueryCondition:
+                CompileSubQueryCondition(ctx, subQueryCondition);
+                break;
+            case InQueryCondition inQueryCondition:
+                CompileInQueryCondition(ctx, inQueryCondition);
+                break;
             default:
-                throw new Exception();
+                var clauseType = clause.GetType();
+
+                var methodName = clauseType switch
+                {
+                    _ when clauseType.IsGenericType && clauseType.GetGenericTypeDefinition() == typeof(InCondition<>) => nameof(CompileInCondition),
+                    _ when clauseType.IsGenericType && clauseType.GetGenericTypeDefinition() == typeof(BetweenCondition<>) => nameof(CompileBetweenCondition),
+                    _ when clauseType.IsGenericType && clauseType.GetGenericTypeDefinition() == typeof(NestedCondition<>) => nameof(CompileNestedCondition),
+                    _ => throw new InvalidCastException(clauseType.FullName),
+                };
+
+                if (!_methods.TryGetValue(clauseType.FullName!, out var methodInfo))
+                {
+                    methodInfo = GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic)!
+                        .MakeGenericMethod(clause.GetType().GenericTypeArguments);
+
+                    _methods.Add(clauseType.FullName!, methodInfo);
+                }
+
+                methodInfo.Invoke(this, new object[] { ctx, clause });
+                break;
         };
     }
 
@@ -47,41 +84,28 @@ public partial class Compiler
         }
     }
 
-    protected virtual string CompileRawCondition(SqlResult ctx, RawCondition x)
+    protected virtual void CompileQueryCondition<T>(SqlResult ctx, QueryCondition<T> x) where T : BaseQuery<T>
     {
-        foreach (var binding in x.Bindings)
-        {
-            var paramName = ctx.GetParamName();
-            ctx.NamedBindings.Add(paramName, binding);
-        }
+        ctx.SqlBuilder.Append(Wrap(x.Column))
+            .Append(' ')
+            .Append(CheckOperator(x.Operator))
+            .Append(" (");
 
-        return x.Expression;
+        CompileQuery(x.Query, ctx);
+
+        ctx.SqlBuilder.Append(')');
     }
 
-    protected virtual string CompileQueryCondition<T>(SqlResult ctx, QueryCondition<T> x) where T : BaseQuery<T>
+    protected virtual void CompileSubQueryCondition<T>(SqlResult ctx, SubQueryCondition<T> x) where T : BaseQuery<T>
     {
-        var subCtx = CompileQuery(x.Query);
+        ctx.SqlBuilder.Append('(');
 
-        foreach (var binding in subCtx.NamedBindings)
-        {
-            var paramName = ctx.GetParamName();
-            ctx.NamedBindings.Add(paramName, binding);
-        }
+        CompileQuery(x.Query, ctx);
 
-        return Wrap(x.Column) + " " + CheckOperator(x.Operator) + " (" + subCtx.RawSql + ")";
-    }
-
-    protected virtual string CompileSubQueryCondition<T>(SqlResult ctx, SubQueryCondition<T> x) where T : BaseQuery<T>
-    {
-        var subCtx = CompileQuery(x.Query);
-
-        foreach (var binding in subCtx.NamedBindings)
-        {
-            var paramName = ctx.GetParamName();
-            ctx.NamedBindings.Add(paramName, binding);
-        }
-
-        return "(" + subCtx.RawSql + ") " + CheckOperator(x.Operator) + " " + Parameter(ctx, x.Value);
+        ctx.SqlBuilder.Append(") ")
+            .Append(CheckOperator(x.Operator))
+            .Append(' ')
+            .Append(Parameter(ctx, x.Value));
     }
 
     protected virtual void CompileBasicCondition(SqlResult ctx, BasicCondition x)
@@ -100,8 +124,6 @@ public partial class Compiler
 
     protected virtual void CompileBasicStringCondition(SqlResult ctx, BasicStringCondition x)
     {
-        var column = Wrap(x.Column);
-
         if (Resolve(ctx, x.Value) is not string value)
         {
             throw new ArgumentException("Expecting a non nullable string");
@@ -128,34 +150,16 @@ public partial class Compiler
             }
         }
 
-
-        if (!x.CaseSensitive)
-        {
-            column = CompileLower(column);
-            value = value.ToLowerInvariant();
-        }
-
         if (x.IsNot)
         {
             ctx.SqlBuilder.Append("NOT (");
         }
 
-        if (x.Value is UnsafeLiteral)
-        {
-            ctx.SqlBuilder.Append(column)
-                .Append(' ')
-                .Append(CheckOperator(method))
-                .Append(' ')
-                .Append(value);
-        }
-        else
-        {
-            ctx.SqlBuilder.Append(column)
-                .Append(' ')
-                .Append(CheckOperator(method))
-                .Append(' ')
-                .Append(Parameter(ctx, value));
-        }
+        ctx.SqlBuilder.Append(Wrap(x.Column))
+            .Append(' ')
+            .Append(CheckOperator(method))
+            .Append(' ')
+            .Append(x.Value is UnsafeLiteral ? value : Parameter(ctx, value));
 
         if (!string.IsNullOrEmpty(x.EscapeCharacter))
         {
@@ -197,14 +201,14 @@ public partial class Compiler
 
     protected virtual void CompileNestedCondition<Q>(SqlResult ctx, NestedCondition<Q> x) where Q : BaseQuery<Q>
     {
-        if (!(x.Query.HasComponent(Component.Where, EngineCode) || x.Query.HasComponent(Component.Having, EngineCode)))
+        if (!(x.Query.HasComponent(Component.Where) || x.Query.HasComponent(Component.Having)))
         {
             return;
         }
 
-        var clause = x.Query.HasComponent(Component.Where, EngineCode) ? Component.Where : Component.Having;
+        var clause = x.Query.HasComponent(Component.Where) ? Component.Where : Component.Having;
 
-        var clauses = x.Query.GetComponents<AbstractCondition>(clause, EngineCode);
+        var clauses = x.Query.GetComponents<AbstractCondition>(clause);
 
         if (x.IsNot)
         {
@@ -251,36 +255,30 @@ public partial class Compiler
             .Append(higher);
     }
 
-    protected virtual string CompileInCondition<T>(SqlResult ctx, InCondition<T> item)
+    protected virtual void CompileInCondition<T>(SqlResult ctx, InCondition<T> item)
         where T : notnull
     {
-        var column = Wrap(item.Column);
-
         if (!item.Values.Any())
         {
-            return item.IsNot ? $"1 = 1 /* NOT IN [empty list] */" : "1 = 0 /* IN [empty list] */";
+            ctx.SqlBuilder.Append(item.IsNot ? "1 = 1 /* NOT IN [empty list] */" : "1 = 0 /* IN [empty list] */");
+            return;
         }
 
-        var inOperator = item.IsNot ? "NOT IN" : "IN";
-
-        var values = Parameterize(ctx, item.Values);
-
-        return column + $" {inOperator} ({values})";
+        ctx.SqlBuilder.Append(Wrap(item.Column))
+            .Append(item.IsNot ? " NOT IN " : " IN ")
+            .Append('(')
+            .Append(Parameterize(ctx, item.Values))
+            .Append(')');
     }
 
-    protected virtual string CompileInQueryCondition(SqlResult ctx, InQueryCondition item)
+    protected virtual void CompileInQueryCondition(SqlResult ctx, InQueryCondition item)
     {
-        var subCtx = CompileQuery(item.Query);
+        ctx.SqlBuilder.Append(Wrap(item.Column))
+            .Append(item.IsNot ? " NOT IN (" : " IN (");
 
-        foreach (var binding in subCtx.NamedBindings)
-        {
-            var paramName = ctx.GetParamName();
-            ctx.NamedBindings.Add(paramName, binding);
-        }
+        CompileQuery(item.Query, ctx);
 
-        var inOperator = item.IsNot ? "NOT IN" : "IN";
-
-        return Wrap(item.Column) + $" {inOperator} ({subCtx.RawSql})";
+        ctx.SqlBuilder.Append(')');
     }
 
     protected virtual void CompileNullCondition(SqlResult ctx, NullCondition item)
@@ -308,15 +306,16 @@ public partial class Compiler
 
         ctx.SqlBuilder.Append('(');
 
-        var subCtx = CompileQuery(query);
+        CompileQuery(query, ctx);
 
-        foreach (var binding in subCtx.NamedBindings)
-        {
-            var paramName = ctx.GetParamName();
-            ctx.NamedBindings.Add(paramName, binding);
-        }
+        //foreach (var binding in subCtx.NamedBindings)
+        //{
+        //    var paramName = ctx.GetParamName();
+        //    ctx.NamedBindings.Add(paramName, binding);
+        //}
 
-        ctx.SqlBuilder.Append(subCtx.RawSql)
+        ctx.SqlBuilder
+            //.Append(subCtx.RawSql)
             .Append(')');
     }
 }

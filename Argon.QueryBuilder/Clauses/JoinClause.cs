@@ -12,7 +12,6 @@ public class BaseJoin : AbstractJoin
     public override AbstractClause Clone()
         => new BaseJoin
         {
-            Engine = Engine,
             Join = Join.Clone(),
             Component = Component,
         };
@@ -31,7 +30,6 @@ public class DeepJoin : AbstractJoin
     public override AbstractClause Clone()
         => new DeepJoin
         {
-            Engine = Engine,
             Component = Component,
             Type = Type,
             Expression = Expression,

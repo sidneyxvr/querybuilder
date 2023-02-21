@@ -1,6 +1,5 @@
-using System.Reflection;
 using Argon.QueryBuilder.Clauses;
-using Argon.QueryBuilder.Exceptions;
+using System.Reflection;
 
 namespace Argon.QueryBuilder;
 
@@ -59,9 +58,7 @@ public partial class Query
 
         foreach (var item in constraints.GetType().GetRuntimeProperties())
         {
-            var currentItem = item.GetValue(constraints);
-
-            CustomNullReferenceException.ThrowIfNull(currentItem);
+            var currentItem = item.GetValue(constraints)!;
 
             dictionary.Add(item.Name, currentItem);
         }
@@ -91,18 +88,6 @@ public partial class Query
 
         return query;
     }
-
-    public Query HavingRaw(string sql, params object[] bindings)
-        => AddComponent(Component.Having, new RawCondition
-        {
-            Expression = sql,
-            Bindings = bindings,
-            IsOr = GetOr(),
-            IsNot = GetNot(),
-        });
-
-    public Query OrHavingRaw(string sql, params object[] bindings)
-        => Or().HavingRaw(sql, bindings);
 
     /// <summary>
     /// Apply a nested Having clause
@@ -160,63 +145,87 @@ public partial class Query
     public Query OrHavingFalse(string column)
         => Or().HavingFalse(column);
 
-    public Query HavingLike(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => AddComponent(Component.Having, new BasicStringCondition { Operator = "like", Column = column, Value = value, CaseSensitive = caseSensitive, EscapeCharacter = escapeCharacter, IsOr = GetOr(), IsNot = GetNot() });
+    public Query HavingLike(string column, object value, string? escapeCharacter = null)
+        => AddComponent(Component.Having, new BasicStringCondition
+        {
+            Operator = "like",
+            Column = column,
+            Value = value,
+            EscapeCharacter =
+            escapeCharacter,
+            IsOr = GetOr(),
+            IsNot = GetNot()
+        });
 
-    public Query HavingNotLike(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Not().HavingLike(column, value, caseSensitive, escapeCharacter);
+    public Query HavingNotLike(string column, object value, string? escapeCharacter = null)
+        => Not().HavingLike(column, value, escapeCharacter);
 
-    public Query OrHavingLike(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Or().HavingLike(column, value, caseSensitive, escapeCharacter);
+    public Query OrHavingLike(string column, object value, string? escapeCharacter = null)
+        => Or().HavingLike(column, value, escapeCharacter);
 
-    public Query OrHavingNotLike(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Or().Not().HavingLike(column, value, caseSensitive, escapeCharacter);
+    public Query OrHavingNotLike(string column, object value, string? escapeCharacter = null)
+        => Or().Not().HavingLike(column, value, escapeCharacter);
 
-    public Query HavingStarts(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => AddComponent(Component.Having, new BasicStringCondition { Operator = "starts", Column = column, Value = value, CaseSensitive = caseSensitive, EscapeCharacter = escapeCharacter, IsOr = GetOr(), IsNot = GetNot() });
+    public Query HavingStarts(string column, object value, string? escapeCharacter = null)
+        => AddComponent(Component.Having, new BasicStringCondition
+        {
+            Operator = "starts",
+            Column = column,
+            Value = value,
+            EscapeCharacter = escapeCharacter,
+            IsOr = GetOr(),
+            IsNot = GetNot()
+        });
 
-    public Query HavingNotStarts(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Not().HavingStarts(column, value, caseSensitive, escapeCharacter);
+    public Query HavingNotStarts(string column, object value, string? escapeCharacter = null)
+        => Not().HavingStarts(column, value, escapeCharacter);
 
-    public Query OrHavingStarts(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Or().HavingStarts(column, value, caseSensitive, escapeCharacter);
+    public Query OrHavingStarts(string column, object value, string? escapeCharacter = null)
+        => Or().HavingStarts(column, value, escapeCharacter);
 
-    public Query OrHavingNotStarts(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Or().Not().HavingStarts(column, value, caseSensitive, escapeCharacter);
+    public Query OrHavingNotStarts(string column, object value, string? escapeCharacter = null)
+        => Or().Not().HavingStarts(column, value, escapeCharacter);
 
-    public Query HavingEnds(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => AddComponent(Component.Having, new BasicStringCondition { Operator = "ends", Column = column, Value = value, CaseSensitive = caseSensitive, EscapeCharacter = escapeCharacter, IsOr = GetOr(), IsNot = GetNot() });
+    public Query HavingEnds(string column, object value, string? escapeCharacter = null)
+        => AddComponent(Component.Having, new BasicStringCondition
+        {
+            Operator = "ends",
+            Column = column,
+            Value = value,
+            EscapeCharacter = escapeCharacter,
+            IsOr = GetOr(),
+            IsNot = GetNot()
+        });
 
-    public Query HavingNotEnds(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Not().HavingEnds(column, value, caseSensitive, escapeCharacter);
+    public Query HavingNotEnds(string column, object value, string? escapeCharacter = null)
+        => Not().HavingEnds(column, value, escapeCharacter);
 
-    public Query OrHavingEnds(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Or().HavingEnds(column, value, caseSensitive, escapeCharacter);
+    public Query OrHavingEnds(string column, object value, string? escapeCharacter = null)
+        => Or().HavingEnds(column, value, escapeCharacter);
 
-    public Query OrHavingNotEnds(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Or().Not().HavingEnds(column, value, caseSensitive, escapeCharacter);
+    public Query OrHavingNotEnds(string column, object value, string? escapeCharacter = null)
+        => Or().Not().HavingEnds(column, value, escapeCharacter);
 
-    public Query HavingContains(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
+    public Query HavingContains(string column, object value, string? escapeCharacter = null)
         => AddComponent(Component.Having,
         new BasicStringCondition
         {
             Operator = "contains",
             Column = column,
             Value = value,
-            CaseSensitive = caseSensitive,
             EscapeCharacter = escapeCharacter,
             IsOr = GetOr(),
             IsNot = GetNot(),
         });
 
-    public Query HavingNotContains(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Not().HavingContains(column, value, caseSensitive, escapeCharacter);
+    public Query HavingNotContains(string column, object value, string? escapeCharacter = null)
+        => Not().HavingContains(column, value, escapeCharacter);
 
-    public Query OrHavingContains(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Or().HavingContains(column, value, caseSensitive, escapeCharacter);
+    public Query OrHavingContains(string column, object value, string? escapeCharacter = null)
+        => Or().HavingContains(column, value, escapeCharacter);
 
-    public Query OrHavingNotContains(string column, object value, bool caseSensitive = false, string? escapeCharacter = null)
-        => Or().Not().HavingContains(column, value, caseSensitive, escapeCharacter);
+    public Query OrHavingNotContains(string column, object value, string? escapeCharacter = null)
+        => Or().Not().HavingContains(column, value, escapeCharacter);
 
     public Query HavingBetween<T>(string column, T lower, T higher)
         where T : notnull
@@ -442,7 +451,7 @@ public partial class Query
 
     public Query HavingDate(string column, object value)
         => HavingDate(column, "=", value);
-    
+
     public Query HavingNotDate(string column, object value)
         => HavingNotDate(column, "=", value);
 

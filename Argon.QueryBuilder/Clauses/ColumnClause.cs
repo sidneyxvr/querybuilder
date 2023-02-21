@@ -22,7 +22,6 @@ public class Column : AbstractColumn
     public override AbstractClause Clone()
         => new Column
         {
-            Engine = Engine,
             Name = Name,
             Component = Component
         };
@@ -44,7 +43,6 @@ public class QueryColumn : AbstractColumn
     public override AbstractClause Clone()
         => new QueryColumn
         {
-            Engine = Engine,
             Query = Query.Clone(),
             Component = Component,
         };
@@ -65,7 +63,6 @@ public class RawColumn : AbstractColumn
     public override AbstractClause Clone()
         => new RawColumn
         {
-            Engine = Engine,
             Expression = Expression,
             Bindings = Bindings,
             Component = Component,
@@ -91,7 +88,6 @@ public class AggregatedColumn : AbstractColumn
     public override AbstractClause Clone()
         => new AggregatedColumn
         {
-            Engine = Engine,
             Filter = Filter?.Clone(),
             Column = (AbstractColumn)Column.Clone(),
             Aggregate = Aggregate,

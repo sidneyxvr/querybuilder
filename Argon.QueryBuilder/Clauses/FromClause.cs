@@ -27,7 +27,6 @@ public class FromClause : AbstractFrom
     public override AbstractClause Clone()
         => new FromClause
         {
-            Engine = Engine,
             Alias = Alias,
             Table = Table,
             Component = Component,
@@ -48,7 +47,6 @@ public class QueryFromClause : AbstractFrom
     public override AbstractClause Clone()
         => new QueryFromClause
         {
-            Engine = Engine,
             Alias = Alias,
             Query = Query.Clone(),
             Component = Component
@@ -64,7 +62,6 @@ public class RawFromClause : AbstractFrom
     public override AbstractClause Clone()
         => new RawFromClause
         {
-            Engine = Engine,
             Alias = Alias,
             Expression = Expression,
             Bindings = Bindings,
@@ -83,7 +80,6 @@ public class AdHocTableFromClause : AbstractFrom
     public override AbstractClause Clone()
         => new AdHocTableFromClause
         {
-            Engine = Engine,
             Alias = Alias,
             Columns = Columns,
             Values = Values,

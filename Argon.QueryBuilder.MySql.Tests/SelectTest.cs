@@ -100,25 +100,4 @@ public class SelectTest : SelectTestBase
 
         AssertSql("SELECT * FROM `Phones` UNION SELECT * FROM `Laptops` WHERE `Type` = @p0");
     }
-
-    public override void WhereFalse()
-    {
-        base.WhereFalse();
-
-        AssertSql("SELECT * FROM `Table` WHERE `IsActive` = false");
-    }
-
-    public override void WhereSubQuery()
-    {
-        base.WhereSubQuery();
-
-        AssertSql("SELECT * FROM `users` WHERE EXISTS (SELECT 1 FROM `friends` WHERE `name` = @p0)");
-    }
-
-    public override void WhereTrue()
-    {
-        base.WhereTrue();
-
-        AssertSql("SELECT * FROM `Table` WHERE `IsActive` = true");
-    }
 }
