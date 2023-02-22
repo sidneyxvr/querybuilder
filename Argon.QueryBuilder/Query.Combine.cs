@@ -83,5 +83,4 @@ public partial class Query
 
     public Query IntersectRaw(string sql, params object[] bindings)
         => CombineRaw(sql, bindings);
-
 }

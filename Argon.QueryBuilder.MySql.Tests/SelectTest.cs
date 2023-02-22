@@ -1,6 +1,6 @@
 using Argon.QueryBuilder.Tests;
 
-namespace Argon.QueryBuilder.Benchmarks;
+namespace Argon.QueryBuilder.MySql.Tests;
 
 public class SelectTest : SelectTestBase
 {
@@ -99,5 +99,19 @@ public class SelectTest : SelectTestBase
         base.UnionWithBindings();
 
         AssertSql("SELECT * FROM `Phones` UNION SELECT * FROM `Laptops` WHERE `Type` = @p0");
+    }
+
+    public override void SelectSum()
+    {
+        base.SelectSum();
+
+        AssertSql("SELECT SUM(`value`) FROM `users`");
+    }
+
+    public override void SelectSumWithAlias()
+    {
+        base.SelectSumWithAlias();
+
+        AssertSql("SELECT SUM(`value`) AS Total FROM `users`");
     }
 }

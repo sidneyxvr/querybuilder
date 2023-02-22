@@ -184,4 +184,23 @@ public class SelectTestBase : TestBase
         => AssertQuery(new Query()
         .From("users")
         .Join("countries", "countries.id", "users.country_id", "=", given));
+
+
+    [Fact]
+    public virtual void SelectSum()
+        => AssertQuery(new Query()
+        .From("users")
+        .SelectSum("value"));
+
+    [Fact]
+    public virtual void SelectSumWithAlias()
+        => AssertQuery(new Query()
+        .From("users")
+        .SelectSum("value AS Total"));
+
+    [Fact]
+    public virtual void SelectRawWithBindings()
+        => AssertQuery(new Query()
+        .From("users")
+        .SelectRaw("id, ?, name", 1));
 }

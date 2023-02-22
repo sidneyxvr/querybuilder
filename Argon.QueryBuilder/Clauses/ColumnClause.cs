@@ -84,12 +84,12 @@ public class AggregatedColumn : AbstractColumn
     /// </value>
     public Query? Filter { get; set; }
     public required string Aggregate { get; set; }
-    public required AbstractColumn Column { get; set; }
+    public required Column Column { get; set; }
     public override AbstractClause Clone()
         => new AggregatedColumn
         {
             Filter = Filter?.Clone(),
-            Column = (AbstractColumn)Column.Clone(),
+            Column = (Column)Column.Clone(),
             Aggregate = Aggregate,
             Component = Component,
         };

@@ -116,13 +116,27 @@ public partial class Query
         => Not().Or().Having(callback);
 
     public Query HavingColumns(string first, string op, string second)
-        => AddComponent(Component.Having, new TwoColumnsCondition { First = first, Second = second, Operator = op, IsOr = GetOr(), IsNot = GetNot() });
+        => AddComponent(Component.Having,
+        new TwoColumnsCondition
+        {
+            First = first,
+            Second = second,
+            Operator = op,
+            IsOr = GetOr(),
+            IsNot = GetNot()
+        });
 
     public Query OrHavingColumns(string first, string op, string second)
         => Or().HavingColumns(first, op, second);
 
     public Query HavingNull(string column)
-        => AddComponent(Component.Having, new NullCondition { Column = column, IsOr = GetOr(), IsNot = GetNot() });
+        => AddComponent(Component.Having,
+        new NullCondition
+        {
+            Column = column,
+            IsOr = GetOr(),
+            IsNot = GetNot()
+        });
 
     public Query HavingNotNull(string column)
         => Not().HavingNull(column);
@@ -134,19 +148,30 @@ public partial class Query
         => Or().Not().HavingNull(column);
 
     public Query HavingTrue(string column)
-        => AddComponent(Component.Having, new BooleanCondition { Column = column, Value = true });
+        => AddComponent(Component.Having,
+        new BooleanCondition
+        {
+            Column = column,
+            Value = true
+        });
 
     public Query OrHavingTrue(string column)
         => Or().HavingTrue(column);
 
     public Query HavingFalse(string column)
-        => AddComponent(Component.Having, new BooleanCondition { Column = column, Value = false });
+        => AddComponent(Component.Having,
+        new BooleanCondition
+        {
+            Column = column,
+            Value = false
+        });
 
     public Query OrHavingFalse(string column)
         => Or().HavingFalse(column);
 
     public Query HavingLike(string column, object value, string? escapeCharacter = null)
-        => AddComponent(Component.Having, new BasicStringCondition
+        => AddComponent(Component.Having,
+        new BasicStringCondition
         {
             Operator = "like",
             Column = column,
@@ -167,7 +192,8 @@ public partial class Query
         => Or().Not().HavingLike(column, value, escapeCharacter);
 
     public Query HavingStarts(string column, object value, string? escapeCharacter = null)
-        => AddComponent(Component.Having, new BasicStringCondition
+        => AddComponent(Component.Having,
+        new BasicStringCondition
         {
             Operator = "starts",
             Column = column,
@@ -187,7 +213,8 @@ public partial class Query
         => Or().Not().HavingStarts(column, value, escapeCharacter);
 
     public Query HavingEnds(string column, object value, string? escapeCharacter = null)
-        => AddComponent(Component.Having, new BasicStringCondition
+        => AddComponent(Component.Having,
+        new BasicStringCondition
         {
             Operator = "ends",
             Column = column,
@@ -229,7 +256,8 @@ public partial class Query
 
     public Query HavingBetween<T>(string column, T lower, T higher)
         where T : notnull
-        => AddComponent(Component.Having, new BetweenCondition<T>
+        => AddComponent(Component.Having,
+        new BetweenCondition<T>
         {
             Column = column,
             IsOr = GetOr(),

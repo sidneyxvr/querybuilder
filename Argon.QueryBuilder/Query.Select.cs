@@ -20,7 +20,7 @@ public partial class Query
         Method = "select";
 
         columns = columns
-            .Select(x => ExpandExpression(x))
+            .Select(ExpandExpression)
             .SelectMany(x => x)
             .ToArray();
 
@@ -117,7 +117,8 @@ public partial class Query
 
         var captures = match.Groups[1].Value;
 
-        var cols = ColumnRegex().Split(captures)
+        var cols = ColumnRegex()
+            .Split(captures)
             .Select(x => $"{table}.{x.Trim()}")
             .ToList();
 

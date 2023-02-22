@@ -1,6 +1,4 @@
 using Argon.QueryBuilder.Clauses;
-using System.Collections.Concurrent;
-using System.Reflection;
 
 namespace Argon.QueryBuilder;
 
@@ -30,11 +28,7 @@ public partial class Query : BaseQuery<Query>
     public bool HasLimit() => GetLimit() > 0;
 
     public long GetOffset()
-    {
-        var offset = GetOneComponent<OffsetClause>(Component.Offset);
-
-        return offset?.Offset ?? 0;
-    }
+        => GetOneComponent<OffsetClause>(Component.Offset)?.Offset ?? 0;
 
     public int GetLimit()
         => GetOneComponent<LimitClause>(Component.Limit)?.Limit ?? 0;
@@ -65,18 +59,6 @@ public partial class Query : BaseQuery<Query>
     {
         _comment = comment;
         return this;
-    }
-
-    public Query For(string engine, Func<Query, Query> fn)
-    {
-        EngineScope = engine;
-
-        var result = fn.Invoke(this);
-
-        // reset the engine
-        EngineScope = null;
-
-        return result;
     }
 
     public Query With(Query query)
@@ -157,24 +139,18 @@ public partial class Query : BaseQuery<Query>
         });
 
     public Query Limit(int value)
-    {
-        var newClause = new LimitClause
+        => AddOrReplaceComponent<LimitClause>(Component.Limit,
+        new LimitClause
         {
             Limit = value
-        };
-
-        return AddOrReplaceComponent(Component.Limit, newClause);
-    }
+        });
 
     public Query Offset(long value)
-    {
-        var newClause = new OffsetClause
+        => AddOrReplaceComponent<OffsetClause>(Component.Offset,
+        new OffsetClause
         {
             Offset = value
-        };
-
-        return AddOrReplaceComponent(Component.Offset, newClause);
-    }
+        });
 
     public Query Offset(int value)
         => Offset((long)value);
@@ -298,8 +274,6 @@ public partial class Query : BaseQuery<Query>
     public override Query NewQuery()
         => new();
 
-    private static readonly ConcurrentDictionary<Type, PropertyInfo[]> CacheDictionaryProperties = new();
-
     /// <summary>
     /// Define a variable to be used within the query
     /// </summary>
@@ -315,11 +289,9 @@ public partial class Query : BaseQuery<Query>
 
     public object FindVariable(string variable)
     {
-        var found = Variables.ContainsKey(variable);
-
-        if (found)
+        if (Variables.TryGetValue(variable, out var value))
         {
-            return Variables[variable];
+            return value;
         }
 
         if (Parent is Query parent)

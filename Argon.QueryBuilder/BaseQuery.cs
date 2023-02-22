@@ -14,14 +14,6 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
 
     private bool orFlag = false;
     private bool notFlag = false;
-    public string? EngineScope = null;
-
-    public Q SetEngineScope(string engine)
-    {
-        EngineScope = engine;
-
-        return (Q)this;
-    }
 
     public BaseQuery()
     {
@@ -56,7 +48,6 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     public Q NewChild()
     {
         var newQuery = NewQuery().SetParent((Q)this);
-        newQuery.EngineScope = EngineScope;
         return newQuery;
     }
 
@@ -84,9 +75,10 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="clause"></param>
     /// <param name="engineCode"></param>
     /// <returns></returns>
-    public Q AddOrReplaceComponent(Component component, AbstractClause clause)
+    public Q AddOrReplaceComponent<C>(Component component, AbstractClause clause)
+         where C : AbstractClause
     {
-        var current = GetComponents(component).SingleOrDefault();
+        var current = GetOneComponent<C>(component);
 
         if (current != null)
             Clauses.Remove(current);
@@ -108,29 +100,12 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     }
 
     /// <summary>
-    /// Get the list of clauses for a component.
-    /// </summary>
-    /// <param name="component"></param>
-    /// <param name="engineCode"></param>
-    /// <returns></returns>
-    public List<AbstractClause> GetComponents(Component component)
-        => GetComponents<AbstractClause>(component);
-
-    /// <summary>
     /// Get a single component clause from the query.
     /// </summary>
     /// <returns></returns>
-    public C? GetOneComponent<C>(Component component) where C : AbstractClause
-        => GetComponents<C>(component).FirstOrDefault();
-
-    /// <summary>
-    /// Get a single component clause from the query.
-    /// </summary>
-    /// <param name="component"></param>
-    /// <param name="engineCode"></param>
-    /// <returns></returns>
-    public AbstractClause? GetOneComponent(Component component)
-        => GetOneComponent<AbstractClause>(component);
+    public C? GetOneComponent<C>(Component component)
+        where C : AbstractClause
+        => Clauses.FirstOrDefault(c => c.Component == component) as C;
 
     /// <summary>
     /// Return whether the query has clauses for a component.
@@ -139,7 +114,7 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="engineCode"></param>
     /// <returns></returns>
     public bool HasComponent(Component component)
-        => GetComponents(component).Any();
+        => Clauses.Any(x => x.Component == component);
 
     /// <summary>
     /// Remove all clauses for a component.
@@ -218,7 +193,7 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="table"></param>
     /// <returns></returns>
     public Q From(string table)
-        => AddOrReplaceComponent(Component.From, new FromClause
+        => AddOrReplaceComponent<FromClause>(Component.From, new FromClause
         {
             Table = table,
         });
@@ -233,14 +208,14 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
             query.As(alias);
         };
 
-        return AddOrReplaceComponent(Component.From, new QueryFromClause
+        return AddOrReplaceComponent<QueryFromClause>(Component.From, new QueryFromClause
         {
             Query = query
         });
     }
 
     public Q FromRaw(string sql, params object[] bindings)
-        => AddOrReplaceComponent(Component.From, new RawFromClause
+        => AddOrReplaceComponent<RawFromClause>(Component.From, new RawFromClause
         {
             Expression = sql,
             Bindings = bindings,

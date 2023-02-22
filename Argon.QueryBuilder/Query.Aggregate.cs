@@ -22,7 +22,7 @@ public partial class Query
     {
         var cols = columns?.ToList() ?? new List<string> { };
 
-        if (!cols.Any())
+        if (cols.Count == 0)
         {
             cols.Add("*");
         }
