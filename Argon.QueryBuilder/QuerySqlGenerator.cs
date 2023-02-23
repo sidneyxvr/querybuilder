@@ -2,7 +2,7 @@ using Argon.QueryBuilder.Clauses;
 using System.Reflection;
 using System.Text;
 
-namespace Argon.QueryBuilder.Compilers;
+namespace Argon.QueryBuilder;
 
 public interface IQuerySqlGenerator
 {
@@ -13,7 +13,6 @@ public class QuerySqlGenerator
 {
     private static readonly Dictionary<string, MethodInfo> _methods = new();
 
-
     protected readonly StringBuilder SqlBuilder = new();
 
     protected readonly Dictionary<string, object> NamedBindings = new();
@@ -23,19 +22,20 @@ public class QuerySqlGenerator
     private string GetParamName()
         => $"@p{index++}";
 
-    private void AddParameter(object value)
+    public void AddParameter(object value)
         => NamedBindings.Add(GetParamName(), value);
 
-    private void AddParameters(object[] value)
+    public void AddParameters(object[] value)
     {
         foreach (var item in value)
         {
             AddParameter(item);
         }
     }
+
     protected static string OpeningIdentifier { get; set; } = "\"";
     protected static string ClosingIdentifier { get; set; } = "\"";
-    protected static string ColumnAsKeyword { get; set; } = "AS ";
+    protected static string ColumnAsKeyword { get; set; } = " AS ";
     protected static string TableAsKeyword { get; set; } = " AS ";
     protected static string EscapeCharacter { get; set; } = "\\";
 
@@ -81,19 +81,19 @@ public class QuerySqlGenerator
 
     private static Query TransformAggregateQuery(Query query)
     {
-        var clause = query.GetOneComponent<AggregateClause>(Component.Aggregate)!;
+        if (query.AggregateColumns.Count == 1 && !query.IsDistinct) return query;
 
-        if (clause.Columns.Count == 1 && !query.IsDistinct) return query;
+        var aggregate = query.AggregateColumns[0];
 
         if (query.IsDistinct)
         {
-            query.ClearComponent(Component.Aggregate);
-            query.ClearComponent(Component.Select);
-            query.Select(clause.Columns.ToArray());
+            query.AggregateColumns.Clear();
+            query.Columns.Clear();
+            query.Select(aggregate.Columns.ToArray());
         }
         else
         {
-            foreach (var column in clause.Columns)
+            foreach (var column in aggregate.Columns)
             {
                 query.WhereNotNull(column);
             }
@@ -101,33 +101,33 @@ public class QuerySqlGenerator
 
         var outerClause = new AggregateClause()
         {
-            Columns = new List<string> { "*" },
-            Type = clause.Type
+            Columns = new List<string>(1) { "*" },
+            Type = aggregate.Type
         };
 
         return new Query()
-            .AddComponent(Component.Aggregate, outerClause)
-            .From(query, $"{clause.Type}Query");
+            .AddComponent(ComponentType.Aggregate, outerClause)
+            .From(query, $"{aggregate.Type}Query");
     }
 
-    protected virtual SqlResult VisitSelect(Query query)
+    protected virtual SqlResult CompileQuery(Query query)
     {
-        if (query.Method == "aggregate")
+        if (query.Method == MethodType.Aggregate)
         {
-            query.ClearComponent(Component.Limit)
-                .ClearComponent(Component.Order)
-                .ClearComponent(Component.Group);
+            query.LimitClause = null;
+            query.OrderByColumns.Clear();
+            query.GroupByColumns.Clear();
 
             query = TransformAggregateQuery(query);
         }
 
-        VisitQuery(query);
+        VisitSelect(query);
 
         // handle CTEs
-        if (query.HasComponent(Component.Cte))
-        {
-            //CompileCteQuery(query);
-        }
+        //if (query.HasComponent(Component.Cte))
+        //{
+        //    //CompileCteQuery(query);
+        //}
 
         return new SqlResult
         {
@@ -136,25 +136,67 @@ public class QuerySqlGenerator
         };
     }
 
-    protected virtual SqlResult VisitQuery(Query query)
+    protected virtual void VisitSelect(Query query)
     {
-        var currentQuery = query.Clone();
+        query = query.Clone();
 
-        VisitProjection(currentQuery);
-        VisitFrom(currentQuery);
-        VisitJoins(currentQuery);
-        VisitWheres(currentQuery);
-        VisitGroups(currentQuery);
-        VisitHaving(currentQuery);
-        VisitOrders(currentQuery);
-        VisitLimit(currentQuery);
-        VisitUnion(currentQuery);
+        SqlBuilder.Append("SELECT ");
 
-        return new SqlResult
+        if (query.IsDistinct)
         {
-            Sql = SqlBuilder.ToString(),
-            Parameters = NamedBindings.AsReadOnly(),
-        };
+            SqlBuilder.Append("DISTINCT ");
+        }
+
+        VisitProjection(query.Columns);
+
+        if (query.FromClause is null)
+        {
+            throw new InvalidOperationException("No FROM clause found");
+        }
+
+        SqlBuilder.Append(" FROM ");
+
+        VisitFrom(query.FromClause);
+
+        if (query.Joins.Count > 0)
+        {
+            VisitJoins(query, query.Joins);
+        }
+
+        if (query.Conditions.Count > 0)
+        {
+            SqlBuilder.Append(" WHERE ");
+
+            VisitConditions(query.Conditions);
+        }
+
+        if (query.GroupByColumns.Count > 0)
+        {
+            SqlBuilder.Append(" GROUP BY ");
+
+            VisitGroups(query.GroupByColumns);
+        }
+
+        if (query.HavingClause is not null)
+        {
+            SqlBuilder.Append(" HAVING ");
+
+            VisitHaving(query.HavingClause);
+        }
+
+        if (query.OrderByColumns.Count > 0)
+        {
+            SqlBuilder.Append(" ORDER BY ");
+
+            VisitOrders(query.OrderByColumns);
+        }
+
+        VisitLimitOffset(query.LimitClause, query.OffsetClause);
+
+        if (query.Unions.Count > 0)
+        {
+            VisitUnions(query.Unions);
+        }
     }
 
     //protected virtual SqlResult CompileAdHocQuery(AdHocTableFromClause adHoc)
@@ -213,11 +255,11 @@ public class QuerySqlGenerator
     /// <param name="ctx"></param>
     /// <param name="column"></param>
     /// <returns></returns>
-    public virtual void VisitColumn(AbstractColumn column)
+    public virtual void VisitColumn(AbstractColumn columnClause)
     {
-        ArgumentNullException.ThrowIfNull(column);
+        ArgumentNullException.ThrowIfNull(columnClause);
 
-        switch (column)
+        switch (columnClause)
         {
             case RawColumn raw:
                 AddParameters(raw.Bindings);
@@ -226,14 +268,13 @@ public class QuerySqlGenerator
             case QueryColumn queryColumn:
                 SqlBuilder.Append('(');
 
-                VisitQuery(queryColumn.Query);
+                VisitSelect(queryColumn.Query);
 
                 SqlBuilder.Append(')');
 
                 if (!string.IsNullOrEmpty(queryColumn.Query.QueryAlias))
                 {
-                    SqlBuilder.Append(' ')
-                        .Append(ColumnAsKeyword)
+                    SqlBuilder.Append(ColumnAsKeyword)
                         .Append(WrapValue(queryColumn.Query.QueryAlias));
                 }
                 break;
@@ -249,7 +290,6 @@ public class QuerySqlGenerator
                     if (!string.IsNullOrEmpty(alias))
                     {
                         SqlBuilder
-                            .Append(' ')
                             .Append(ColumnAsKeyword)
                             .Append(alias);
                     }
@@ -266,8 +306,20 @@ public class QuerySqlGenerator
                     //}
                 }
                 break;
-            default:
-                SqlBuilder.Append(Wrap(((Column)column).Name));
+            case Column column:
+                if (column.Table is not null)
+                {
+                    SqlBuilder.Append(WrapValue(column.Table))
+                        .Append('.');
+                }
+
+                SqlBuilder.Append(WrapValue(column.Name));
+                if (column.Alias is not null)
+                {
+                    SqlBuilder.Append(ColumnAsKeyword)
+                        .Append(column.Alias);
+                }
+
                 break;
         }
     }
@@ -279,9 +331,9 @@ public class QuerySqlGenerator
             return;
         }
 
-        var wheres = aggregatedColumn.Filter.GetComponents<AbstractCondition>(Component.Where);
+        var wheres = aggregatedColumn.Filter.Conditions;
 
-        VisitConditions(query, wheres);
+        VisitConditions(wheres);
     }
 
     //public virtual SqlResult CompileCte(AbstractFrom cte)
@@ -316,43 +368,37 @@ public class QuerySqlGenerator
     //    return ctx;
     //}
 
-    protected virtual void VisitProjection(Query query)
+    protected virtual void ProjectionPreProcessor(Query query)
     {
-        SqlBuilder.Append("SELECT ");
-
-        if (query.IsDistinct)
+        if (query.AggregateColumns.Count == 0)
         {
-            SqlBuilder.Append("DISTINCT ");
-        }
-
-        if (query.HasComponent(Component.Aggregate))
-        {
-            var aggregate = query.GetOneComponent<AggregateClause>(Component.Aggregate)!;
-
-            if (aggregate.Columns.Count == 1)
-            {
-                SqlBuilder.Append(aggregate.Type.ToUpperInvariant())
-                    .Append('(');
-
-                VisitColumn(new Column { Name = aggregate.Columns[0] });
-
-                SqlBuilder.Append(") ")
-                    .Append(ColumnAsKeyword)
-                    .Append(WrapValue(aggregate.Type));
-            }
-
-            SqlBuilder.Append('1');
-
             return;
         }
 
-        var columns = query.GetComponents<AbstractColumn>(Component.Select);
+        var aggregate = query.AggregateColumns[0];
 
+        if (aggregate.Columns.Count == 1)
+        {
+            SqlBuilder.Append(aggregate.Type.ToUpperInvariant())
+                .Append('(');
+
+            VisitColumn(new Column { Name = aggregate.Columns[0] });
+
+            SqlBuilder.Append(')')
+                .Append(ColumnAsKeyword)
+                .Append(WrapValue(aggregate.Type));
+        }
+
+        SqlBuilder.Append('1');
+    }
+
+    protected virtual void VisitProjection(IReadOnlyList<AbstractColumn> columns)
+    {
         if (columns.Count > 0)
         {
             for (var i = 0; i < columns.Count; i++)
             {
-                if (i != 0)
+                if (i > 0)
                 {
                     SqlBuilder.Append(", ");
                 }
@@ -366,20 +412,18 @@ public class QuerySqlGenerator
         }
     }
 
-    public virtual void VisitUnion(Query query)
+    public virtual void VisitUnions(IReadOnlyList<AbstractCombine> combines)
     {
-        var clauses = query.GetComponents<AbstractCombine>(Component.Combine);
-
-        foreach (var clause in clauses)
+        foreach (var combine in combines)
         {
-            switch (clause)
+            switch (combine)
             {
                 case Combine combineClause:
                     SqlBuilder.Append(' ')
                         .Append(combineClause.Operation.ToUpperInvariant())
                         .Append(combineClause.All ? " ALL " : " ");
 
-                    VisitQuery(combineClause.Query);
+                    VisitSelect(combineClause.Query);
                     break;
                 case RawCombine rawCombine:
                     AddParameters(rawCombine.Bindings);
@@ -404,7 +448,7 @@ public class QuerySqlGenerator
 
                 SqlBuilder.Append('(');
 
-                VisitQuery(fromQuery);
+                VisitSelect(fromQuery);
 
                 SqlBuilder.Append(')');
 
@@ -415,7 +459,13 @@ public class QuerySqlGenerator
                 }
                 break;
             case FromClause fromClause:
-                SqlBuilder.Append(Wrap(fromClause.Table));
+                SqlBuilder.Append(WrapValue(fromClause.Table));
+
+                if (!string.IsNullOrEmpty(fromClause.Alias))
+                {
+                    SqlBuilder.Append(TableAsKeyword)
+                        .Append(WrapValue(fromClause.Alias));
+                }
                 break;
             default:
                 throw new InvalidCastException(
@@ -423,30 +473,11 @@ public class QuerySqlGenerator
         }
     }
 
-    public virtual void VisitFrom(Query query)
+    public virtual void VisitFrom(AbstractFrom fromClause)
+        => VisitTableExpression(fromClause);
+
+    public virtual void VisitJoins(Query query, IReadOnlyList<BaseJoin> joins)
     {
-        if (!query.HasComponent(Component.From))
-        {
-            return;
-        }
-
-        var from = query.GetOneComponent<AbstractFrom>(Component.From)
-            ?? throw new InvalidOperationException("TODO: ");
-
-        SqlBuilder.Append(" FROM ");
-
-        VisitTableExpression(from);
-    }
-
-    public virtual void VisitJoins(Query query)
-    {
-        if (!query.HasComponent(Component.Join))
-        {
-            return;
-        }
-
-        var joins = query.GetComponents<BaseJoin>(Component.Join);
-
         for (var i = 0; i < joins.Count; i++)
         {
             VisitJoin(query, joins[i].Join);
@@ -455,8 +486,8 @@ public class QuerySqlGenerator
 
     public virtual void VisitJoin(Query query, Join join, bool isNested = false)
     {
-        var from = join.GetOneComponent<AbstractFrom>(Component.From)!;
-        var conditions = join.GetComponents<AbstractCondition>(Component.Where);
+        var from = join.FromClause!;
+        var conditions = join.Conditions;
 
         if (conditions.Count == 0)
         {
@@ -473,59 +504,27 @@ public class QuerySqlGenerator
         SqlBuilder
             .Append(" ON ");
 
-        VisitConditions(query, conditions);
+        VisitConditions(conditions);
     }
 
-    public virtual void VisitWheres(Query query)
+    public virtual void VisitGroups(IReadOnlyList<AbstractColumn> groups)
     {
-        var conditions = query.GetComponents<AbstractCondition>(Component.Where);
-
-        if (conditions.Count == 0)
+        for (var i = 0; i < groups.Count; i++)
         {
-            return;
-        }
-
-        SqlBuilder.Append(" WHERE ");
-
-        VisitConditions(query, conditions);
-    }
-
-    public virtual void VisitGroups(Query query)
-    {
-        var columns = query.GetComponents<AbstractColumn>(Component.Group);
-
-        if (columns.Count == 0)
-        {
-            return;
-        }
-
-        SqlBuilder.Append("GROUP BY ");
-
-        for (var i = 0; i < columns.Count; i++)
-        {
-            if (i != 0)
+            if (i > 0)
             {
                 SqlBuilder.Append(", ");
             }
 
-            SqlBuilder.Append(columns[i]);
+            SqlBuilder.Append(groups[i]);
         }
     }
 
-    public virtual void VisitOrders(Query query)
+    public virtual void VisitOrders(IReadOnlyList<AbstractOrderBy> orders)
     {
-        var orders = query.GetComponents<AbstractOrderBy>(Component.Order);
-
-        if (orders.Count == 0)
-        {
-            return;
-        }
-
-        SqlBuilder.Append(" ORDER BY ");
-
         for (var i = 0; i < orders.Count; i++)
         {
-            if (i != 0)
+            if (i > 0)
             {
                 SqlBuilder.Append(", ");
             }
@@ -552,31 +551,20 @@ public class QuerySqlGenerator
         }
     }
 
-    public virtual string? VisitHaving(Query query)
+    public virtual void VisitHaving(AbstractCondition having)
     {
-        var sql = new List<string>();
-        string boolOperator;
+        VisitCondition(having);
 
-        var having = query.GetComponents<AbstractCondition>(Component.Having)
-            .Cast<AbstractCondition>()
-            .ToList();
+        // boolOperator = i > 0 ? having[i].IsOr ? "OR " : "AND " : "";
 
-        for (var i = 0; i < having.Count; i++)
-        {
-            VisitCondition(query, having[i]);
-
-            boolOperator = i > 0 ? having[i].IsOr ? "OR " : "AND " : "";
-
-            //sql.Add(boolOperator + compiled);
-        }
-
-        return $"HAVING {string.Join(" ", sql)}";
+        //sql.Add(boolOperator + compiled);
+        // return $"HAVING {string.Join(" ", sql)}";
     }
 
-    public virtual void VisitLimit(Query query)
+    public virtual void VisitLimitOffset(LimitClause? limitClause, OffsetClause? offsetClause)
     {
-        var limit = query.GetLimit();
-        var offset = query.GetOffset();
+        var limit = limitClause?.Limit ?? 0;
+        var offset = offsetClause?.Offset ?? 0;
 
         if (limit == 0 && offset == 0)
         {
@@ -586,7 +574,7 @@ public class QuerySqlGenerator
         if (offset == 0)
         {
             SqlBuilder.Append(" LIMIT ")
-                .Append(Parameter(query, limit));
+                .Append(Parameter(limit));
 
             return;
         }
@@ -594,21 +582,21 @@ public class QuerySqlGenerator
         if (limit == 0)
         {
             SqlBuilder.Append(" LIMIT 18446744073709551615 OFFSET ")
-                .Append(Parameter(query, offset));
+                .Append(Parameter(offset));
 
             return;
         }
 
         SqlBuilder.Append(" LIMIT ")
-            .Append(Parameter(query, limit))
+            .Append(Parameter(limit))
             .Append(" OFFSET ")
-            .Append(Parameter(query, offset));
+            .Append(Parameter(offset));
     }
 
-    protected virtual string CompileTrue()
+    protected virtual string DbValueTrue()
         => "true";
 
-    protected virtual string CompileFalse()
+    protected virtual string DbValueFalse()
         => "false";
 
     protected static string CheckOperator(string operation)
@@ -678,11 +666,11 @@ public class QuerySqlGenerator
     /// <param name="ctx"></param>
     /// <param name="parameter"></param>
     /// <returns></returns>
-    protected virtual object Resolve(Query query, object parameter)
+    protected virtual object Resolve(object parameter)
         => parameter switch
         {
             UnsafeLiteral literal => literal.Value,
-            Variable variable => query.FindVariable(variable.Name),
+            // Variable variable => query.FindVariable(variable.Name),
             _ => parameter
         };
 
@@ -692,7 +680,7 @@ public class QuerySqlGenerator
     /// <param name="ctx"></param>
     /// <param name="parameter"></param>
     /// <returns></returns>
-    protected virtual string Parameter(Query query, object parameter)
+    protected virtual string Parameter(object parameter)
     {
         ArgumentNullException.ThrowIfNull(parameter);
 
@@ -703,8 +691,8 @@ public class QuerySqlGenerator
             case Variable variable:
                 {
                     var paramName = GetParamName();
-                    var value = query.FindVariable(variable.Name);
-                    NamedBindings.Add(paramName, value);
+                    //var value = query.FindVariable(variable.Name);
+                    //NamedBindings.Add(paramName, value);
                     return paramName;
                 }
             default:
@@ -722,22 +710,22 @@ public class QuerySqlGenerator
     /// <param name="ctx"></param>
     /// <param name="values"></param>
     /// <returns></returns>
-    protected virtual string Parameterize<T>(Query query, IEnumerable<T> values)
+    protected virtual string Parameterize<T>(IEnumerable<T> values)
         where T : notnull
-        => string.Join(", ", values.Select(x => Parameter(query, x)));
+        => string.Join(", ", values.Select(x => Parameter(x)));
 
-    protected virtual void VisitCondition(Query query, AbstractCondition clause)
+    protected virtual void VisitCondition(AbstractCondition clause)
     {
         switch (clause)
         {
             case BasicStringCondition basicStringCondition:
-                VisitBasicStringCondition(query, basicStringCondition);
+                VisitBasicStringCondition(basicStringCondition);
                 break;
             case BasicDateCondition basicDateCondition:
-                VisitBasicDateCondition(query, basicDateCondition);
+                VisitBasicDateCondition(basicDateCondition);
                 break;
             case BasicCondition basicCondition:
-                VisitBasicCondition(query, basicCondition);
+                VisitBasicCondition(basicCondition);
                 break;
             case TwoColumnsCondition twoColumnsCondition:
                 VisitTwoColumnsCondition(twoColumnsCondition);
@@ -752,16 +740,16 @@ public class QuerySqlGenerator
                 VisitExistsCondition(existsCondition);
                 break;
             case InCondition<int> inCondition:
-                VisitInCondition(query, inCondition);
+                VisitInCondition(inCondition);
                 break;
             case BetweenCondition<DateTime> betweenCondition:
-                VisitBetweenCondition(query, betweenCondition);
+                VisitBetweenCondition(betweenCondition);
                 break;
             case QueryCondition<Query> queryCondition:
                 VisitQueryCondition(queryCondition);
                 break;
             case SubQueryCondition<Query> subQueryCondition:
-                VisitSubQueryCondition(query, subQueryCondition);
+                VisitSubQueryCondition(subQueryCondition);
                 break;
             case InQueryCondition inQueryCondition:
                 VisitInQueryCondition(inQueryCondition);
@@ -788,21 +776,21 @@ public class QuerySqlGenerator
                     _methods.Add(cacheKey, methodInfo);
                 }
 
-                methodInfo.Invoke(this, new object[] { query, clause });
+                methodInfo.Invoke(this, new object[] { clause });
                 break;
         };
     }
 
-    protected virtual void VisitConditions(Query query, List<AbstractCondition> conditions)
+    protected virtual void VisitConditions(IReadOnlyList<AbstractCondition> conditions)
     {
         for (var i = 0; i < conditions.Count; i++)
         {
-            if (i != 0)
+            if (i > 0)
             {
                 SqlBuilder.Append(conditions[i].IsOr ? " OR " : " AND ");
             }
 
-            VisitCondition(query, conditions[i]);
+            VisitCondition(conditions[i]);
         }
     }
 
@@ -813,24 +801,24 @@ public class QuerySqlGenerator
             .Append(CheckOperator(x.Operator))
             .Append(" (");
 
-        VisitQuery(x.Query);
+        VisitSelect(x.Query);
 
         SqlBuilder.Append(')');
     }
 
-    protected virtual void VisitSubQueryCondition<T>(Query query, SubQueryCondition<T> x) where T : BaseQuery<T>
+    protected virtual void VisitSubQueryCondition<T>(SubQueryCondition<T> x) where T : BaseQuery<T>
     {
         SqlBuilder.Append('(');
 
-        VisitQuery(x.Query);
+        VisitSelect(x.Query);
 
         SqlBuilder.Append(") ")
             .Append(CheckOperator(x.Operator))
             .Append(' ')
-            .Append(Parameter(query, x.Value));
+            .Append(Parameter(x.Value));
     }
 
-    protected virtual void VisitBasicCondition(Query query, BasicCondition x)
+    protected virtual void VisitBasicCondition(BasicCondition x)
     {
         if (x.IsNot)
         {
@@ -841,12 +829,12 @@ public class QuerySqlGenerator
             .Append(' ')
             .Append(CheckOperator(x.Operator))
             .Append(' ')
-            .Append(Parameter(query, x.Value));
+            .Append(Parameter(x.Value));
     }
 
-    protected virtual void VisitBasicStringCondition(Query query, BasicStringCondition x)
+    protected virtual void VisitBasicStringCondition(BasicStringCondition x)
     {
-        if (Resolve(query, x.Value) is not string value)
+        if (Resolve(x.Value) is not string value)
         {
             throw new ArgumentException("Expecting a non nullable string");
         }
@@ -880,7 +868,7 @@ public class QuerySqlGenerator
             .Append(' ')
             .Append(CheckOperator(method))
             .Append(' ')
-            .Append(x.Value is UnsafeLiteral ? value : Parameter(query, value));
+            .Append(x.Value is UnsafeLiteral ? value : Parameter(value));
 
         if (!string.IsNullOrEmpty(x.EscapeCharacter))
         {
@@ -896,7 +884,7 @@ public class QuerySqlGenerator
         }
     }
 
-    protected virtual void VisitBasicDateCondition(Query query, BasicDateCondition x)
+    protected virtual void VisitBasicDateCondition(BasicDateCondition x)
     {
         var column = Wrap(x.Column);
         var op = CheckOperator(x.Operator);
@@ -912,7 +900,7 @@ public class QuerySqlGenerator
             .Append(") ")
             .Append(op)
             .Append(' ')
-            .Append(Parameter(query, x.Value));
+            .Append(Parameter(x.Value));
 
         if (x.IsNot)
         {
@@ -920,16 +908,16 @@ public class QuerySqlGenerator
         }
     }
 
-    protected virtual void VisitNestedCondition<Q>(Query query, NestedCondition<Q> x) where Q : BaseQuery<Q>
+    protected virtual void VisitNestedCondition<Q>(NestedCondition<Q> x) where Q : BaseQuery<Q>
     {
-        if (!(x.Query.HasComponent(Component.Where) || x.Query.HasComponent(Component.Having)))
+        if (x.Query is { Conditions.Count: 0, HavingClause: null })
         {
             return;
         }
 
-        var clause = x.Query.HasComponent(Component.Where) ? Component.Where : Component.Having;
-
-        var clauses = x.Query.GetComponents<AbstractCondition>(clause);
+        var clauses = x.Query.Conditions.Count > 0
+            ? x.Query.Conditions
+            : new List<AbstractCondition>(1) { x.Query.HavingClause! };
 
         if (x.IsNot)
         {
@@ -938,7 +926,7 @@ public class QuerySqlGenerator
 
         SqlBuilder.Append('(');
 
-        VisitConditions(query, clauses);
+        VisitConditions(clauses);
 
         SqlBuilder.Append(')');
     }
@@ -959,13 +947,13 @@ public class QuerySqlGenerator
             .Append(Wrap(clause.Second));
     }
 
-    protected virtual void VisitBetweenCondition<T>(Query query, BetweenCondition<T> item)
+    protected virtual void VisitBetweenCondition<T>(BetweenCondition<T> item)
         where T : notnull
     {
         ArgumentNullException.ThrowIfNull(item);
 
-        var lower = Parameter(query, item.Lower!);
-        var higher = Parameter(query, item.Higher!);
+        var lower = Parameter(item.Lower!);
+        var higher = Parameter(item.Higher!);
 
         SqlBuilder.Append(Wrap(item.Column))
             .Append(item.IsNot ? " NOT BETWEEN " : " BETWEEN ")
@@ -974,7 +962,7 @@ public class QuerySqlGenerator
             .Append(higher);
     }
 
-    protected virtual void VisitInCondition<T>(Query query, InCondition<T> item)
+    protected virtual void VisitInCondition<T>(InCondition<T> item)
         where T : notnull
     {
         if (!item.Values.Any())
@@ -986,7 +974,7 @@ public class QuerySqlGenerator
         SqlBuilder.Append(Wrap(item.Column))
             .Append(item.IsNot ? " NOT IN " : " IN ")
             .Append('(')
-            .Append(Parameterize(query, item.Values))
+            .Append(Parameterize(item.Values))
             .Append(')');
     }
 
@@ -995,7 +983,7 @@ public class QuerySqlGenerator
         SqlBuilder.Append(Wrap(item.Column))
             .Append(item.IsNot ? " NOT IN (" : " IN (");
 
-        VisitQuery(item.Query);
+        VisitSelect(item.Query);
 
         SqlBuilder.Append(')');
     }
@@ -1007,7 +995,7 @@ public class QuerySqlGenerator
     protected virtual void VisitBooleanCondition(BooleanCondition item)
         => SqlBuilder.Append(Wrap(item.Column))
         .Append(item.IsNot ? " != " : " = ")
-        .Append(item.Value ? CompileTrue() : CompileFalse());
+        .Append(item.Value ? DbValueTrue() : DbValueFalse());
 
     protected virtual void VisitExistsCondition(ExistsCondition item)
     {
@@ -1018,12 +1006,13 @@ public class QuerySqlGenerator
 
         if (OmitSelectInsideExists)
         {
-            query.ClearComponent(Component.Select).SelectRaw("1");
+            query.Columns.Clear();
+            query.SelectRaw("1");
         }
 
         SqlBuilder.Append('(');
 
-        VisitQuery(query);
+        VisitSelect(query);
 
         SqlBuilder.Append(')');
     }

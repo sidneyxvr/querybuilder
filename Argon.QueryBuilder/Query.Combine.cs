@@ -6,12 +6,12 @@ public partial class Query
 {
     public Query Combine(string operation, bool all, Query query)
     {
-        if (Method != "select" || query.Method != "select")
+        if (Method != MethodType.Select || query.Method != MethodType.Select)
         {
             throw new InvalidOperationException("Only select queries can be combined.");
         }
 
-        return AddComponent(Component.Combine, new Combine
+        return AddComponent(ComponentType.Union, new Combine
         {
             Query = query,
             Operation = operation,
@@ -21,12 +21,12 @@ public partial class Query
 
     public Query CombineRaw(string sql, params object[] bindings)
     {
-        if (Method != "select")
+        if (Method != MethodType.Select)
         {
             throw new InvalidOperationException("Only select queries can be combined.");
         }
 
-        return AddComponent(Component.Combine, new RawCombine
+        return AddComponent(ComponentType.Union, new RawCombine
         {
             Expression = sql,
             Bindings = bindings,

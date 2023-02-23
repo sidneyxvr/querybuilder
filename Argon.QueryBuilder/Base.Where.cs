@@ -1,11 +1,13 @@
 using Argon.QueryBuilder.Clauses;
+using System.Data.Common;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Argon.QueryBuilder;
 
 public abstract partial class BaseQuery<Q>
 {
-    public Q Where(string column, string op, object value)
+    public Q Where(string column, string op, object? value)
     {
         // If the value is "null", we will just assume the developer wants to add a
         // where null clause to the query. So, we will allow a short-cut here to
@@ -25,7 +27,7 @@ public abstract partial class BaseQuery<Q>
             return boolValue ? WhereTrue(column) : WhereFalse(column);
         }
 
-        return AddComponent(Component.Where, new BasicCondition
+        return AddComponent(ComponentType.Where, new BasicCondition
         {
             Column = column,
             Operator = op,
@@ -108,12 +110,12 @@ public abstract partial class BaseQuery<Q>
         var query = callback.Invoke(NewChild());
 
         // omit empty queries
-        if (!query.Clauses.Where(x => x.Component == Component.Where).Any())
+        if (query.Conditions.Count == 0)
         {
             return (Q)this;
         }
 
-        return AddComponent(Component.Where, new NestedCondition<Q>
+        return AddComponent(ComponentType.Where, new NestedCondition<Q>
         {
             Query = query,
             IsNot = GetNot(),
@@ -131,7 +133,7 @@ public abstract partial class BaseQuery<Q>
         => Not().Or().Where(callback);
 
     public Q WhereColumns(string first, string op, string second)
-        => AddComponent(Component.Where,
+        => AddComponent(ComponentType.Where,
         new TwoColumnsCondition
         {
             First = first,
@@ -145,7 +147,7 @@ public abstract partial class BaseQuery<Q>
         => Or().WhereColumns(first, op, second);
 
     public Q WhereNull(string column)
-        => AddComponent(Component.Where,
+        => AddComponent(ComponentType.Where,
         new NullCondition
         {
             Column = column,
@@ -163,7 +165,7 @@ public abstract partial class BaseQuery<Q>
         => Or().Not().WhereNull(column);
 
     public Q WhereTrue(string column)
-        => AddComponent(Component.Where,
+        => AddComponent(ComponentType.Where,
         new BooleanCondition
         {
             Column = column,
@@ -176,7 +178,7 @@ public abstract partial class BaseQuery<Q>
         => Or().WhereTrue(column);
 
     public Q WhereFalse(string column)
-        => AddComponent(Component.Where,
+        => AddComponent(ComponentType.Where,
         new BooleanCondition
         {
             Column = column,
@@ -189,7 +191,7 @@ public abstract partial class BaseQuery<Q>
         => Or().WhereFalse(column);
 
     public Q WhereLike(string column, object value, string? escapeCharacter = null)
-        => AddComponent(Component.Where,
+        => AddComponent(ComponentType.Where,
         new BasicStringCondition
         {
             Operator = "like",
@@ -210,7 +212,7 @@ public abstract partial class BaseQuery<Q>
         => Or().Not().WhereLike(column, value, escapeCharacter);
 
     public Q WhereStarts(string column, object value, string? escapeCharacter = null)
-        => AddComponent(Component.Where,
+        => AddComponent(ComponentType.Where,
         new BasicStringCondition
         {
             Operator = "starts",
@@ -231,7 +233,7 @@ public abstract partial class BaseQuery<Q>
         => Or().Not().WhereStarts(column, value, escapeCharacter);
 
     public Q WhereEnds(string column, object value, string? escapeCharacter = null)
-        => AddComponent(Component.Where,
+        => AddComponent(ComponentType.Where,
         new BasicStringCondition
         {
             Operator = "ends",
@@ -252,7 +254,7 @@ public abstract partial class BaseQuery<Q>
         => Or().Not().WhereEnds(column, value, escapeCharacter);
 
     public Q WhereContains(string column, object value, string? escapeCharacter = null)
-        => AddComponent(Component.Where,
+        => AddComponent(ComponentType.Where,
         new BasicStringCondition
         {
             Operator = "contains",
@@ -274,7 +276,7 @@ public abstract partial class BaseQuery<Q>
 
     public Q WhereBetween<T>(string column, T lower, T higher)
         where T : notnull
-        => AddComponent(Component.Where, new BetweenCondition<T>
+        => AddComponent(ComponentType.Where, new BetweenCondition<T>
         {
             Column = column,
             IsOr = GetOr(),
@@ -301,7 +303,7 @@ public abstract partial class BaseQuery<Q>
         // since string is considered as List<char>
         if (values is string value)
         {
-            return AddComponent(Component.Where, new InCondition<string>
+            return AddComponent(ComponentType.Where, new InCondition<string>
             {
                 Column = column,
                 IsOr = GetOr(),
@@ -310,7 +312,7 @@ public abstract partial class BaseQuery<Q>
             });
         }
 
-        return AddComponent(Component.Where, new InCondition<T>
+        return AddComponent(ComponentType.Where, new InCondition<T>
         {
             Column = column,
             IsOr = GetOr(),
@@ -329,7 +331,7 @@ public abstract partial class BaseQuery<Q>
         => Or().Not().WhereIn(column, values);
 
     public Q WhereIn(string column, Query query)
-        => AddComponent(Component.Where,
+        => AddComponent(ComponentType.Where,
         new InQueryCondition
         {
             Column = column,
@@ -378,7 +380,7 @@ public abstract partial class BaseQuery<Q>
     }
 
     public Q Where(string column, string op, Query query)
-        => AddComponent(Component.Where,
+        => AddComponent(ComponentType.Where,
         new QueryCondition<Query>
         {
             Column = column,
@@ -392,7 +394,7 @@ public abstract partial class BaseQuery<Q>
         => WhereSub(query, "=", value);
 
     public Q WhereSub(Query query, string op, object value)
-        => AddComponent(Component.Where,
+        => AddComponent(ComponentType.Where,
         new SubQueryCondition<Query>
         {
             Value = value,
@@ -415,12 +417,12 @@ public abstract partial class BaseQuery<Q>
 
     public Q WhereExists(Query query)
     {
-        if (!query.HasComponent(Component.From))
+        if (query.FromClause is null)
         {
             throw new ArgumentException($"'{nameof(FromClause)}' cannot be empty if used inside a '{nameof(WhereExists)}' condition");
         }
 
-        return AddComponent(Component.Where, new ExistsCondition
+        return AddComponent(ComponentType.Where, new ExistsCondition
         {
             Query = query,
             IsNot = GetNot(),
@@ -452,7 +454,7 @@ public abstract partial class BaseQuery<Q>
         => Or().Not().WhereExists(callback);
 
     public Q WhereDatePart(string part, string column, string op, object value)
-        => AddComponent(Component.Where,
+        => AddComponent(ComponentType.Where,
          new BasicDateCondition
          {
              Operator = op,
@@ -531,4 +533,48 @@ public abstract partial class BaseQuery<Q>
 
     public Q OrWhereNotTime(string column, object value)
         => OrWhereNotTime(column, "=", value);
+
+    protected static IEnumerable<(string? Table, string Name, string? Alias)> ExpandColumnExpression(string expression)
+    {
+        var match = ExpandRegex().Match(expression);
+
+        if (!match.Success)
+        {
+            var (name, alias) = ExpandColumn(expression);
+
+            yield return (null, name, alias);
+        }
+        else
+        {
+            var table = expression[..expression.IndexOf(".{")];
+            foreach (var column in ColumnRegex().Split(match.Groups[1].Value))
+            {
+                var (name, alias) = ExpandColumn(column);
+
+                yield return (table, name, alias);
+            }
+        }
+    }
+
+    private static (string Name, string? Alias) ExpandColumn(string expression)
+    {
+        if (expression.Contains(" as ", StringComparison.OrdinalIgnoreCase))
+        {
+            var parts = AliasRegex().Split(expression);
+            return (parts[0], parts[1]);
+        }
+
+        return (expression, null);
+    }
+
+    protected static (string Name, string? Alias) ExpandTableExpression(string expression)
+    {
+        if (expression.Contains(" as ", StringComparison.OrdinalIgnoreCase))
+        {
+            var parts = AliasRegex().Split(expression);
+            return (parts[0], parts[1]);
+        }
+
+        return (expression, null);
+    }
 }

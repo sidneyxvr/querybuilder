@@ -114,4 +114,11 @@ public class SelectTest : SelectTestBase
 
         AssertSql("SELECT SUM(`value`) AS Total FROM `users`");
     }
+
+    public override void SelectWithAlias()
+    {
+        base.SelectWithAlias();
+
+        AssertSql("SELECT `id` AS Id, `name` AS Name FROM `users`");
+    }
 }

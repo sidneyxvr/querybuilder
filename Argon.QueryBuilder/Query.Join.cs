@@ -8,7 +8,7 @@ public partial class Query
     {
         var join = callback.Invoke(new Join().AsInner());
 
-        return AddComponent(Component.Join, new BaseJoin
+        return AddComponent(ComponentType.Join, new BaseJoin
         {
             Join = join
         });

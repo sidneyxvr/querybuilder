@@ -8,7 +8,7 @@ public partial class Query : BaseQuery<Query>
 
     public bool IsDistinct { get; set; }
     public string? QueryAlias { get; set; }
-    public string Method { get; set; } = "select";
+    public MethodType Method { get; set; } = MethodType.Select;
     public Dictionary<string, object> Variables = new();
 
     public Query() : base()
@@ -23,16 +23,6 @@ public partial class Query : BaseQuery<Query>
 
     public string GetComment() => _comment ?? "";
 
-    public bool HasOffset() => GetOffset() > 0;
-
-    public bool HasLimit() => GetLimit() > 0;
-
-    public long GetOffset()
-        => GetOneComponent<OffsetClause>(Component.Offset)?.Offset ?? 0;
-
-    public int GetLimit()
-        => GetOneComponent<LimitClause>(Component.Limit)?.Limit ?? 0;
-
     public override Query Clone()
     {
         var clone = base.Clone();
@@ -41,6 +31,18 @@ public partial class Query : BaseQuery<Query>
         clone.IsDistinct = IsDistinct;
         clone.Method = Method;
         clone.Variables = Variables;
+
+        clone.Columns = Columns;
+        clone.FromClause = FromClause;
+        clone.Joins = Joins;
+        clone.Conditions = Conditions;
+        clone.GroupByColumns = GroupByColumns;
+        clone.HavingClause = HavingClause;
+        clone.LimitClause = LimitClause;
+        clone.OffsetClause = OffsetClause;
+        clone.OrderByColumns = OrderByColumns;
+        clone.Unions = Unions;
+
         return clone;
     }
 
@@ -76,7 +78,7 @@ public partial class Query : BaseQuery<Query>
         // clear the query alias
         query.QueryAlias = null;
 
-        return AddComponent(Component.Cte, new QueryFromClause
+        return AddComponent(ComponentType.Cte, new QueryFromClause
         {
             Query = query,
             Alias = alias,
@@ -127,11 +129,11 @@ public partial class Query : BaseQuery<Query>
             clause.Values.AddRange(valuesList);
         }
 
-        return AddComponent(Component.Cte, clause);
+        return AddComponent(ComponentType.Cte, clause);
     }
 
     public Query WithRaw(string alias, string sql, params object[] bindings)
-        => AddComponent(Component.Cte, new RawFromClause
+        => AddComponent(ComponentType.Cte, new RawFromClause
         {
             Alias = alias,
             Expression = sql,
@@ -139,14 +141,14 @@ public partial class Query : BaseQuery<Query>
         });
 
     public Query Limit(int value)
-        => AddOrReplaceComponent<LimitClause>(Component.Limit,
+        => AddOrReplaceComponent<LimitClause>(ComponentType.Limit,
         new LimitClause
         {
             Limit = value
         });
 
     public Query Offset(long value)
-        => AddOrReplaceComponent<OffsetClause>(Component.Offset,
+        => AddOrReplaceComponent<OffsetClause>(ComponentType.Offset,
         new OffsetClause
         {
             Offset = value
@@ -212,7 +214,7 @@ public partial class Query : BaseQuery<Query>
     {
         foreach (var column in columns)
         {
-            AddComponent(Component.Order, new OrderBy
+            AddComponent(ComponentType.Order, new OrderBy
             {
                 Column = column,
                 Ascending = true
@@ -226,7 +228,7 @@ public partial class Query : BaseQuery<Query>
     {
         foreach (var column in columns)
         {
-            AddComponent(Component.Order, new OrderBy
+            AddComponent(ComponentType.Order, new OrderBy
             {
                 Column = column,
                 Ascending = false
@@ -237,7 +239,7 @@ public partial class Query : BaseQuery<Query>
     }
 
     public Query OrderByRaw(string expression, params object[] bindings)
-        => AddComponent(Component.Order,
+        => AddComponent(ComponentType.Order,
             new RawOrderBy
             {
                 Expression = expression,
@@ -245,13 +247,13 @@ public partial class Query : BaseQuery<Query>
             });
 
     public Query OrderByRandom()
-        => AddComponent(Component.Order, new OrderByRandom { });
+        => AddComponent(ComponentType.Order, new OrderByRandom { });
 
     public Query GroupBy(params string[] columns)
     {
         foreach (var column in columns)
         {
-            AddComponent(Component.Group, new Column
+            AddComponent(ComponentType.Group, new Column
             {
                 Name = column
             });
@@ -262,7 +264,7 @@ public partial class Query : BaseQuery<Query>
 
     public Query GroupByRaw(string expression, params object[] bindings)
     {
-        AddComponent(Component.Group, new RawColumn
+        AddComponent(ComponentType.Group, new RawColumn
         {
             Expression = expression,
             Bindings = bindings,

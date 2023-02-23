@@ -1,5 +1,5 @@
 using Argon.QueryBuilder.Clauses;
-using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Argon.QueryBuilder;
 
@@ -10,7 +10,29 @@ public abstract class AbstractQuery
 
 public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q>
 {
-    public List<AbstractClause> Clauses { get; set; } = new();
+    [GeneratedRegex(@"^(?:\w+\.){1,2}{(.*)}")]
+    private static partial Regex ExpandRegex();
+
+
+    [GeneratedRegex("\\s*,\\s*")]
+    private static partial Regex ColumnRegex();
+
+
+    [GeneratedRegex(" as ", RegexOptions.IgnoreCase)]
+    private static partial Regex AliasRegex();
+
+    public List<AbstractColumn> Columns { get; set; } = new();
+    public List<AggregateClause> AggregateColumns { get; set; } = new();
+    public AbstractFrom? FromClause { get; set; }
+    public List<BaseJoin> Joins { get; set; } = new();
+    public List<AbstractCondition> Conditions { get; set; } = new();
+    public AbstractCondition? HavingClause { get; set; }
+    public List<AbstractOrderBy> OrderByColumns { get; set; } = new();
+    public List<AbstractColumn> GroupByColumns { get; set; } = new();
+    public List<AbstractCombine> Unions{ get; set; } = new();
+    public LimitClause? LimitClause { get; set; }
+    public OffsetClause? OffsetClause { get; set; }
+
 
     private bool orFlag = false;
     private bool notFlag = false;
@@ -26,8 +48,6 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     public virtual Q Clone()
     {
         var q = NewQuery();
-
-        q.Clauses = Clauses.Select(x => x.Clone()).ToList();
 
         return q;
     }
@@ -58,10 +78,49 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="clause"></param>
     /// <param name="engineCode"></param>
     /// <returns></returns>
-    public Q AddComponent(Component component, AbstractClause clause)
+    public Q AddComponent(ComponentType component, AbstractClause clause)
     {
         clause.Component = component;
-        Clauses.Add(clause);
+        if (component == ComponentType.Select)
+        {
+            Columns.Add((AbstractColumn)clause);
+        }
+        else if (component == ComponentType.From)
+        {
+            FromClause = (AbstractFrom)clause;
+        }
+        else if (component == ComponentType.Join)
+        {
+            Joins.Add((BaseJoin)clause);
+        }
+        else if (component == ComponentType.Where)
+        {
+            Conditions.Add((AbstractCondition)clause);
+        }
+        else if (component == ComponentType.Order)
+        {
+            OrderByColumns.Add((AbstractOrderBy)clause);
+        }
+        else if (component == ComponentType.Group)
+        {
+            GroupByColumns.Add((AbstractColumn)clause);
+        }
+        else if (component == ComponentType.Limit)
+        {
+            LimitClause = (LimitClause)clause;
+        }
+        else if (component == ComponentType.Offset)
+        {
+            OffsetClause = (OffsetClause)clause;
+        }
+        else if (component == ComponentType.Aggregate)
+        {
+            AggregateColumns.Add((AggregateClause)clause);
+        }
+        else if (component == ComponentType.Union)
+        {
+            Unions.Add((AbstractCombine)clause);
+        }
 
         return (Q)this;
     }
@@ -75,61 +134,9 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="clause"></param>
     /// <param name="engineCode"></param>
     /// <returns></returns>
-    public Q AddOrReplaceComponent<C>(Component component, AbstractClause clause)
-         where C : AbstractClause
-    {
-        var current = GetOneComponent<C>(component);
-
-        if (current != null)
-            Clauses.Remove(current);
-
-        return AddComponent(component, clause);
-    }
-
-    /// <summary>
-    /// Get the list of clauses for a component.
-    /// </summary>
-    /// <returns></returns>
-    public List<C> GetComponents<C>(Component component) where C : AbstractClause
-    {
-        var clauses = Clauses
-            .Where(x => x.Component == component)
-            .Cast<C>();
-
-        return clauses.ToList();
-    }
-
-    /// <summary>
-    /// Get a single component clause from the query.
-    /// </summary>
-    /// <returns></returns>
-    public C? GetOneComponent<C>(Component component)
+    public Q AddOrReplaceComponent<C>(ComponentType component, AbstractClause clause)
         where C : AbstractClause
-        => Clauses.FirstOrDefault(c => c.Component == component) as C;
-
-    /// <summary>
-    /// Return whether the query has clauses for a component.
-    /// </summary>
-    /// <param name="component"></param>
-    /// <param name="engineCode"></param>
-    /// <returns></returns>
-    public bool HasComponent(Component component)
-        => Clauses.Any(x => x.Component == component);
-
-    /// <summary>
-    /// Remove all clauses for a component.
-    /// </summary>
-    /// <param name="component"></param>
-    /// <param name="engineCode"></param>
-    /// <returns></returns>
-    public Q ClearComponent(Component component)
-    {
-        Clauses = Clauses
-            .Where(x => x.Component != component)
-            .ToList();
-
-        return (Q)this;
-    }
+        => AddComponent(component, clause);
 
     /// <summary>
     /// Set the next boolean operator to "and" for the "where" clause.
@@ -193,10 +200,16 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <param name="table"></param>
     /// <returns></returns>
     public Q From(string table)
-        => AddOrReplaceComponent<FromClause>(Component.From, new FromClause
+    {
+        var (name, alias) = ExpandTableExpression(table);
+
+        return AddOrReplaceComponent<FromClause>(ComponentType.From,
+        new FromClause
         {
-            Table = table,
+            Table = name,
+            Alias = alias
         });
+    }
 
     public Q From(Query query, string? alias = null)
     {
@@ -208,14 +221,14 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
             query.As(alias);
         };
 
-        return AddOrReplaceComponent<QueryFromClause>(Component.From, new QueryFromClause
+        return AddOrReplaceComponent<QueryFromClause>(ComponentType.From, new QueryFromClause
         {
             Query = query
         });
     }
 
     public Q FromRaw(string sql, params object[] bindings)
-        => AddOrReplaceComponent<RawFromClause>(Component.From, new RawFromClause
+        => AddOrReplaceComponent<RawFromClause>(ComponentType.From, new RawFromClause
         {
             Expression = sql,
             Bindings = bindings,

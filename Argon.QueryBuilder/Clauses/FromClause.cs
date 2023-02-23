@@ -2,13 +2,7 @@ namespace Argon.QueryBuilder.Clauses;
 
 public abstract class AbstractFrom : AbstractClause
 {
-    protected string? _alias;
-
-    /// <summary>
-    /// Try to extract the Alias for the current clause.
-    /// </summary>
-    /// <returns></returns>
-    public virtual string? Alias { get => _alias; set => _alias = value; }
+    public string? Alias { get; set; }
 }
 
 /// <summary>
@@ -17,11 +11,6 @@ public abstract class AbstractFrom : AbstractClause
 public class FromClause : AbstractFrom
 {
     public required string Table { get; set; }
-
-    public override string? Alias
-        => Table.Contains(" as ", StringComparison.OrdinalIgnoreCase)
-        ? Table.Split(' ', StringSplitOptions.RemoveEmptyEntries)[2]
-        : Table;
 
     /// <inheritdoc />
     public override AbstractClause Clone()
@@ -39,9 +28,6 @@ public class FromClause : AbstractFrom
 public class QueryFromClause : AbstractFrom
 {
     public required Query Query { get; set; }
-
-    public override string? Alias
-        => string.IsNullOrEmpty(_alias) ? Query.QueryAlias : _alias;
 
     /// <inheritdoc />
     public override AbstractClause Clone()

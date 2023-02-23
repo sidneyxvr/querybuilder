@@ -203,4 +203,11 @@ public class SelectTestBase : TestBase
         => AssertQuery(new Query()
         .From("users")
         .SelectRaw("id, ?, name", 1));
+
+
+    [Fact]
+    public virtual void SelectWithAlias()
+        => AssertQuery(new Query()
+        .From("users")
+        .Select("id as Id", "name AS Name"));
 }

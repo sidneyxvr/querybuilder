@@ -46,7 +46,7 @@ public class Join : BaseQuery<Join>
     public Join AsCross() => AsType("cross join");
 
     public Join On(string first, string second, string op = "=")
-        => AddComponent(Component.Where, new TwoColumnsCondition
+        => AddComponent(ComponentType.Where, new TwoColumnsCondition
         {
             First = first,
             Second = second,

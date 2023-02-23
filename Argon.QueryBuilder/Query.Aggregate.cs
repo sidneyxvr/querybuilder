@@ -6,14 +6,15 @@ public partial class Query
 {
     public Query AsAggregate(string type, string[]? columns = null)
     {
-        Method = "aggregate";
+        Method = MethodType.Aggregate;
 
-        ClearComponent(Component.Aggregate)
-            .AddComponent(Component.Aggregate, new AggregateClause
-            {
-                Type = type,
-                Columns = columns?.ToList() ?? new List<string>(),
-            });
+        AggregateColumns.Clear();
+        
+        AddComponent(ComponentType.Aggregate, new AggregateClause
+        {
+            Type = type,
+            Columns = columns?.ToList() ?? new List<string>(),
+        });
 
         return this;
     }

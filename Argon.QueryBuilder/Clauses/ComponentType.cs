@@ -1,6 +1,6 @@
 namespace Argon.QueryBuilder.Clauses;
 
-public enum Component
+public enum ComponentType
 {
     Select,
     From,
@@ -13,5 +13,5 @@ public enum Component
     Group,
     Cte,
     Join,
-    Combine,
+    Union,
 }
