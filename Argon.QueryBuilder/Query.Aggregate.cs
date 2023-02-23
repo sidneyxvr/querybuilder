@@ -9,11 +9,21 @@ public partial class Query
         Method = MethodType.Aggregate;
 
         AggregateColumns.Clear();
-        
+
         AddComponent(ComponentType.Aggregate, new AggregateClause
         {
             Type = type,
-            Columns = columns?.ToList() ?? new List<string>(),
+            Columns = columns?.Select(c =>
+            {
+                var (name, alias) = ExpandColumn(c);
+
+                return new Column
+                {
+                    Name = name,
+                    Alias = alias,
+                };
+            })
+            .ToList() ?? new List<Column>(),
         });
 
         return this;

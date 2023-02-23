@@ -12,7 +12,7 @@ public class AggregateClause : AbstractClause
     /// <value>
     /// The columns to be aggregated.
     /// </value>
-    public required List<string> Columns { get; set; }
+    public required List<Column> Columns { get; set; }
 
     /// <summary>
     /// Gets or sets the type of aggregate function.
@@ -27,6 +27,6 @@ public class AggregateClause : AbstractClause
         => new AggregateClause
         {
             Type = Type,
-            Columns = new List<string>(Columns),
+            Columns = Columns,
         };
 }

@@ -81,27 +81,30 @@ public class QuerySqlGenerator
 
     private static Query TransformAggregateQuery(Query query)
     {
-        if (query.AggregateColumns.Count == 1 && !query.IsDistinct) return query;
-
         var aggregate = query.AggregateColumns[0];
+
+        if (aggregate.Columns.Count == 1 && !query.IsDistinct) return query;
 
         if (query.IsDistinct)
         {
             query.AggregateColumns.Clear();
             query.Columns.Clear();
-            query.Select(aggregate.Columns.ToArray());
+            foreach (var column in aggregate.Columns)
+            {
+                query.AddComponent(ComponentType.Select, column);
+            }
         }
         else
         {
             foreach (var column in aggregate.Columns)
             {
-                query.WhereNotNull(column);
+                query.WhereNotNull(column.Alias is null ? column.Name : $"{column.Name}.{column.Alias}");
             }
         }
 
         var outerClause = new AggregateClause()
         {
-            Columns = new List<string>(1) { "*" },
+            Columns = new List<Column>(1) { new Column { Name = "*" } },
             Type = aggregate.Type
         };
 
@@ -387,7 +390,7 @@ public class QuerySqlGenerator
             SqlBuilder.Append(aggregate.Type.ToUpperInvariant())
                 .Append('(');
 
-            VisitColumn(new Column { Name = aggregate.Columns[0] });
+            VisitColumn(aggregate.Columns[0]);
 
             SqlBuilder.Append(')')
                 .Append(ColumnAsKeyword)
@@ -399,14 +402,14 @@ public class QuerySqlGenerator
 
     protected virtual void VisitAggregate(AggregateClause aggregate)
     {
-        var aggregateColumns = aggregate.Columns;
-
-        if (aggregateColumns.Count == 1)
+        if (aggregate.Columns.Count == 1)
         {
             SqlBuilder.Append(aggregate.Type.ToUpperInvariant())
-                .Append('(')
-                .Append(' ')
-                .Append(')')
+                .Append('(');
+
+            VisitColumn(aggregate.Columns[0]);
+
+            SqlBuilder.Append(')')
                 .Append(ColumnAsKeyword)
                 .Append(WrapValue(aggregate.Type));
 
@@ -979,7 +982,7 @@ public class QuerySqlGenerator
         var lower = Parameter(item.Lower!);
         var higher = Parameter(item.Higher!);
 
-        SqlBuilder.Append(Wrap(item.Column))
+        SqlBuilder.Append(WrapValue(item.Column))
             .Append(item.IsNot ? " NOT BETWEEN " : " BETWEEN ")
             .Append(lower)
             .Append(" AND ")
