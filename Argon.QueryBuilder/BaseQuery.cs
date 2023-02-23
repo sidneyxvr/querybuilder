@@ -80,7 +80,6 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
     /// <returns></returns>
     public Q AddComponent(ComponentType component, AbstractClause clause)
     {
-        clause.Component = component;
         if (component == ComponentType.Select)
         {
             Columns.Add((AbstractColumn)clause);

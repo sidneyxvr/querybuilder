@@ -1,7 +1,5 @@
 using Argon.QueryBuilder.Clauses;
-using System.Data.Common;
 using System.Reflection;
-using System.Text.RegularExpressions;
 
 namespace Argon.QueryBuilder;
 
@@ -556,7 +554,7 @@ public abstract partial class BaseQuery<Q>
         }
     }
 
-    private static (string Name, string? Alias) ExpandColumn(string expression)
+    protected static (string Name, string? Alias) ExpandColumn(string expression)
     {
         if (expression.Contains(" as ", StringComparison.OrdinalIgnoreCase))
         {

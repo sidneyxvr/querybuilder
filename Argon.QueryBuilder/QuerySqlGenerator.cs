@@ -138,8 +138,6 @@ public class QuerySqlGenerator
 
     protected virtual void VisitSelect(Query query)
     {
-        query = query.Clone();
-
         SqlBuilder.Append("SELECT ");
 
         if (query.IsDistinct)
@@ -147,7 +145,14 @@ public class QuerySqlGenerator
             SqlBuilder.Append("DISTINCT ");
         }
 
-        VisitProjection(query.Columns);
+        if (query.AggregateColumns.Count > 0)
+        {
+            VisitAggregate(query.AggregateColumns[0]);
+        }
+        else
+        {
+            VisitProjection(query.Columns);
+        }
 
         if (query.FromClause is null)
         {
@@ -387,6 +392,25 @@ public class QuerySqlGenerator
             SqlBuilder.Append(')')
                 .Append(ColumnAsKeyword)
                 .Append(WrapValue(aggregate.Type));
+        }
+
+        SqlBuilder.Append('1');
+    }
+
+    protected virtual void VisitAggregate(AggregateClause aggregate)
+    {
+        var aggregateColumns = aggregate.Columns;
+
+        if (aggregateColumns.Count == 1)
+        {
+            SqlBuilder.Append(aggregate.Type.ToUpperInvariant())
+                .Append('(')
+                .Append(' ')
+                .Append(')')
+                .Append(ColumnAsKeyword)
+                .Append(WrapValue(aggregate.Type));
+
+            return;
         }
 
         SqlBuilder.Append('1');

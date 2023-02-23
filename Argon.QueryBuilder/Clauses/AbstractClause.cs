@@ -8,6 +8,5 @@ public abstract class AbstractClause
     /// <value>
     /// The component name.
     /// </value>
-    public ComponentType? Component { get; set; }
     public abstract AbstractClause Clone();
 }

@@ -24,6 +24,5 @@ public class LimitClause : AbstractClause
         => new LimitClause
         {
             Limit = Limit,
-            Component = Component
         };
 }

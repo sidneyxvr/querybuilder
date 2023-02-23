@@ -18,7 +18,6 @@ public class FromClause : AbstractFrom
         {
             Alias = Alias,
             Table = Table,
-            Component = Component,
         };
 }
 
@@ -35,7 +34,6 @@ public class QueryFromClause : AbstractFrom
         {
             Alias = Alias,
             Query = Query.Clone(),
-            Component = Component
         };
 }
 
@@ -51,7 +49,6 @@ public class RawFromClause : AbstractFrom
             Alias = Alias,
             Expression = Expression,
             Bindings = Bindings,
-            Component = Component,
         };
 }
 
@@ -69,6 +66,5 @@ public class AdHocTableFromClause : AbstractFrom
             Alias = Alias,
             Columns = Columns,
             Values = Values,
-            Component = Component
         };
 }

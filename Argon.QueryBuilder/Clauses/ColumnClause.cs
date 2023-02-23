@@ -25,7 +25,6 @@ public class Column : AbstractColumn
         {
             Name = Name,
             Alias = Alias,
-            Component = Component
         };
 }
 
@@ -46,7 +45,6 @@ public class QueryColumn : AbstractColumn
         => new QueryColumn
         {
             Query = Query.Clone(),
-            Component = Component,
         };
 }
 
@@ -67,7 +65,6 @@ public class RawColumn : AbstractColumn
         {
             Expression = Expression,
             Bindings = Bindings,
-            Component = Component,
         };
 }
 
@@ -93,6 +90,5 @@ public class AggregatedColumn : AbstractColumn
             Filter = Filter?.Clone(),
             Column = (Column)Column.Clone(),
             Aggregate = Aggregate,
-            Component = Component,
         };
 }

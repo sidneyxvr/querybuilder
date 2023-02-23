@@ -13,6 +13,5 @@ public class BaseJoin : AbstractJoin
         => new BaseJoin
         {
             Join = Join.Clone(),
-            Component = Component,
         };
 }

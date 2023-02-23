@@ -28,6 +28,5 @@ public class AggregateClause : AbstractClause
         {
             Type = Type,
             Columns = new List<string>(Columns),
-            Component = Component,
         };
 }

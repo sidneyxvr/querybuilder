@@ -41,6 +41,7 @@ public partial class Query : BaseQuery<Query>
         clone.LimitClause = LimitClause;
         clone.OffsetClause = OffsetClause;
         clone.OrderByColumns = OrderByColumns;
+        clone.AggregateColumns = AggregateColumns;
         clone.Unions = Unions;
 
         return clone;

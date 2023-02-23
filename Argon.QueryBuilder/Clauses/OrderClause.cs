@@ -14,7 +14,6 @@ public class OrderBy : AbstractOrderBy
     public override AbstractClause Clone()
         => new OrderBy
         {
-            Component = Component,
             Column = Column,
             Ascending = Ascending
         };
@@ -29,7 +28,6 @@ public class RawOrderBy : AbstractOrderBy
     public override AbstractClause Clone()
         => new RawOrderBy
         {
-            Component = Component,
             Expression = Expression,
             Bindings = Bindings
         };

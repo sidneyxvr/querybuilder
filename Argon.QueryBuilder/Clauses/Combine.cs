@@ -35,7 +35,6 @@ public class Combine : AbstractCombine
         => new Combine
         {
             Operation = Operation,
-            Component = Component,
             Query = Query,
             All = All
         };
@@ -50,7 +49,6 @@ public class RawCombine : AbstractCombine
     public override AbstractClause Clone()
         => new RawCombine
         {
-            Component = Component,
             Expression = Expression,
             Bindings = Bindings
         };

@@ -24,7 +24,6 @@ public class BasicCondition : AbstractCondition
             Value = Value,
             IsOr = IsOr,
             IsNot = IsNot,
-            Component = Component
         };
 }
 
@@ -53,7 +52,6 @@ public class BasicStringCondition : BasicCondition
             IsOr = IsOr,
             IsNot = IsNot,
             EscapeCharacter = EscapeCharacter,
-            Component = Component,
         };
 }
 
@@ -71,7 +69,6 @@ public class BasicDateCondition : BasicCondition
         IsOr = IsOr,
         IsNot = IsNot,
         Part = Part,
-        Component = Component
     };
 }
 
@@ -93,7 +90,6 @@ public class TwoColumnsCondition : AbstractCondition
             Second = Second,
             IsOr = IsOr,
             IsNot = IsNot,
-            Component = Component,
         };
 }
 
@@ -115,7 +111,6 @@ public class QueryCondition<T> : AbstractCondition where T : BaseQuery<T>
             Query = Query.Clone(),
             IsOr = IsOr,
             IsNot = IsNot,
-            Component = Component,
         };
 }
 
@@ -137,7 +132,6 @@ public class SubQueryCondition<T> : AbstractCondition where T : BaseQuery<T>
         Query = Query.Clone(),
         IsOr = IsOr,
         IsNot = IsNot,
-        Component = Component
     };
 }
 
@@ -155,7 +149,6 @@ public class InCondition<T> : AbstractCondition
             Values = new List<T>(Values),
             IsOr = IsOr,
             IsNot = IsNot,
-            Component = Component,
         };
 }
 
@@ -173,7 +166,6 @@ public class InQueryCondition : AbstractCondition
             Query = Query.Clone(),
             IsOr = IsOr,
             IsNot = IsNot,
-            Component = Component,
         };
 }
 
@@ -194,7 +186,6 @@ public class BetweenCondition<T> : AbstractCondition
             Lower = Lower,
             IsOr = IsOr,
             IsNot = IsNot,
-            Component = Component
         };
 }
 
@@ -212,7 +203,6 @@ public class NullCondition : AbstractCondition
             Column = Column,
             IsOr = IsOr,
             IsNot = IsNot,
-            Component = Component,
         };
 }
 
@@ -231,7 +221,6 @@ public class BooleanCondition : AbstractCondition
             Column = Column,
             IsOr = IsOr,
             IsNot = IsNot,
-            Component = Component,
             Value = Value
         };
 }
@@ -249,7 +238,6 @@ public class NestedCondition<T> : AbstractCondition where T : BaseQuery<T>
             Query = Query.Clone(),
             IsOr = IsOr,
             IsNot = IsNot,
-            Component = Component,
         };
 }
 
@@ -267,6 +255,5 @@ public class ExistsCondition : AbstractCondition
             Query = Query.Clone(),
             IsOr = IsOr,
             IsNot = IsNot,
-            Component = Component
         };
 }
