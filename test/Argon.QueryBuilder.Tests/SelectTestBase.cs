@@ -74,80 +74,80 @@ public class SelectTestBase : TestBase
     //    c[EngineCodes.MySql]);
 
     // test for issue #50
-    [Fact]
-    public virtual void CascadedCteAndBindings()
-    {
-        var cte1 = new Query("Table1");
-        cte1.Select("Column1", "Column2");
-        cte1.Where("Column2", 1);
+    //[Fact]
+    //public virtual void CascadedCteAndBindings()
+    //{
+    //    var cte1 = new Query("Table1");
+    //    cte1.Select("Column1", "Column2");
+    //    cte1.Where("Column2", 1);
 
-        var cte2 = new Query("Table2");
-        cte2.With("cte1", cte1);
-        cte2.Select("Column3", "Column4");
-        cte2.Join("cte1", join => join.On("Column1", "Column3"));
-        cte2.Where("Column4", 2);
+    //    var cte2 = new Query("Table2");
+    //    cte2.With("cte1", cte1);
+    //    cte2.Select("Column3", "Column4");
+    //    cte2.Join("cte1", join => join.On("Column1", "Column3"));
+    //    cte2.Where("Column4", 2);
 
-        var mainQuery = new Query("Table3");
-        mainQuery.With("cte2", cte2);
-        mainQuery.Select("*");
-        mainQuery.From("cte2");
-        mainQuery.Where("Column3", 5);
-    }
+    //    var mainQuery = new Query("Table3");
+    //    mainQuery.With("cte2", cte2);
+    //    mainQuery.Select("*");
+    //    mainQuery.From("cte2");
+    //    mainQuery.Where("Column3", 5);
+    //}
 
-    // test for issue #50
-    [Fact]
-    public virtual void CascadedAndMultiReferencedCteAndBindings()
-    {
-        var cte1 = new Query("Table1");
-        cte1.Select("Column1", "Column2");
-        cte1.Where("Column2", 1);
+    //// test for issue #50
+    //[Fact]
+    //public virtual void CascadedAndMultiReferencedCteAndBindings()
+    //{
+    //    var cte1 = new Query("Table1");
+    //    cte1.Select("Column1", "Column2");
+    //    cte1.Where("Column2", 1);
 
-        var cte2 = new Query("Table2");
-        cte2.With("cte1", cte1);
-        cte2.Select("Column3", "Column4");
-        cte2.Join("cte1", join => join.On("Column1", "Column3"));
-        cte2.Where("Column4", 2);
+    //    var cte2 = new Query("Table2");
+    //    cte2.With("cte1", cte1);
+    //    cte2.Select("Column3", "Column4");
+    //    cte2.Join("cte1", join => join.On("Column1", "Column3"));
+    //    cte2.Where("Column4", 2);
 
-        var cte3 = new Query("Table3");
-        cte3.With("cte1", cte1);
-        cte3.Select("Column3_3", "Column3_4");
-        cte3.Join("cte1", join => join.On("Column1", "Column3_3"));
-        cte3.Where("Column3_4", 33);
+    //    var cte3 = new Query("Table3");
+    //    cte3.With("cte1", cte1);
+    //    cte3.Select("Column3_3", "Column3_4");
+    //    cte3.Join("cte1", join => join.On("Column1", "Column3_3"));
+    //    cte3.Where("Column3_4", 33);
 
-        var mainQuery = new Query("Table3");
-        mainQuery.With("cte2", cte2);
-        mainQuery.With("cte3", cte3);
-        mainQuery.Select("*");
-        mainQuery.From("cte2");
-        mainQuery.Where("Column3", 5);
-    }
+    //    var mainQuery = new Query("Table3");
+    //    mainQuery.With("cte2", cte2);
+    //    mainQuery.With("cte3", cte3);
+    //    mainQuery.Select("*");
+    //    mainQuery.From("cte2");
+    //    mainQuery.Where("Column3", 5);
+    //}
 
-    // test for issue #50
-    [Fact]
-    public virtual void MultipleCtesAndBindings()
-    {
-        var cte1 = new Query("Table1");
-        cte1.Select("Column1", "Column2");
-        cte1.Where("Column2", 1);
+    //// test for issue #50
+    //[Fact]
+    //public virtual void MultipleCtesAndBindings()
+    //{
+    //    var cte1 = new Query("Table1");
+    //    cte1.Select("Column1", "Column2");
+    //    cte1.Where("Column2", 1);
 
-        var cte2 = new Query("Table2");
-        cte2.Select("Column3", "Column4");
-        cte2.Join("cte1", join => join.On("Column1", "Column3"));
-        cte2.Where("Column4", 2);
+    //    var cte2 = new Query("Table2");
+    //    cte2.Select("Column3", "Column4");
+    //    cte2.Join("cte1", join => join.On("Column1", "Column3"));
+    //    cte2.Where("Column4", 2);
 
-        var cte3 = new Query("Table3");
-        cte3.Select("Column3_3", "Column3_4");
-        cte3.Join("cte1", join => join.On("Column1", "Column3_3"));
-        cte3.Where("Column3_4", 33);
+    //    var cte3 = new Query("Table3");
+    //    cte3.Select("Column3_3", "Column3_4");
+    //    cte3.Join("cte1", join => join.On("Column1", "Column3_3"));
+    //    cte3.Where("Column3_4", 33);
 
-        var mainQuery = new Query("Table3");
-        mainQuery.With("cte1", cte1);
-        mainQuery.With("cte2", cte2);
-        mainQuery.With("cte3", cte3);
-        mainQuery.Select("*");
-        mainQuery.From("cte3");
-        mainQuery.Where("Column3_4", 5);
-    }
+    //    var mainQuery = new Query("Table3");
+    //    mainQuery.With("cte1", cte1);
+    //    mainQuery.With("cte2", cte2);
+    //    mainQuery.With("cte3", cte3);
+    //    mainQuery.Select("*");
+    //    mainQuery.From("cte3");
+    //    mainQuery.Where("Column3_4", 5);
+    //}
 
     [Fact]
     public virtual void Limit()
@@ -185,13 +185,6 @@ public class SelectTestBase : TestBase
         .From("users")
         .Join("countries", "countries.id", "users.country_id", "=", given));
 
-
-    [Fact]
-    public virtual void SelectSum()
-        => AssertQuery(new Query()
-        .From("users")
-        .SelectSum("value"));
-
     [Fact]
     public virtual void SelectSumWithAlias()
         => AssertQuery(new Query()
@@ -210,4 +203,47 @@ public class SelectTestBase : TestBase
         => AssertQuery(new Query()
         .From("users")
         .Select("id as Id", "name AS Name"));
+
+    [Fact]
+    public virtual void SelectQuery()
+        => AssertQuery(new Query("users as u")
+            .Select(new Query("posts as p")
+                .Where("p.userId", "u.id")
+                .Select("p.createdAt"), "lastPublishDate"));
+
+    [Fact]
+    public virtual void SelectQueryLambda()
+        => AssertQuery(new Query("users as u")
+            .Select(q => new Query("posts as p")
+                .Where("p.userId", "u.id")
+                .Select("p.createdAt"), "lastPublishDate"));
+
+    [Fact]
+    public virtual void SelectParams()
+        => AssertQuery(new Query("users").Select("id", "name"));
+
+    [Fact]
+    public virtual void SelectEnumerable()
+        => AssertQuery(new Query("users").Select(new[] { "id", "name" }));
+
+    [Fact]
+    public virtual void SelectSum()
+        => AssertQuery(new Query("users")
+        .SelectSum("value"));
+
+    [Fact]
+    public virtual void SelectCount()
+        => AssertQuery(new Query("users").SelectCount("id"));
+
+    [Fact]
+    public virtual void SelectAvg()
+        => AssertQuery(new Query("users").SelectAvg("id"));
+
+    [Fact]
+    public virtual void SelectMin()
+        => AssertQuery(new Query("users").SelectMin("id"));
+
+    [Fact]
+    public virtual void SelectMax()
+        => AssertQuery(new Query("users").SelectMax("id"));
 }

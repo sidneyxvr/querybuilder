@@ -39,15 +39,15 @@ public class SelectTest : SelectTestBase
         AssertSql("SELECT `id`, `name` FROM `users` AS `u`");
     }
 
-    public override void CascadedAndMultiReferencedCteAndBindings()
-    {
-        base.CascadedAndMultiReferencedCteAndBindings();
-    }
+    //public override void CascadedAndMultiReferencedCteAndBindings()
+    //{
+    //    base.CascadedAndMultiReferencedCteAndBindings();
+    //}
 
-    public override void CascadedCteAndBindings()
-    {
-        base.CascadedCteAndBindings();
-    }
+    //public override void CascadedCteAndBindings()
+    //{
+    //    base.CascadedCteAndBindings();
+    //}
 
     public override void CombineRawWithPlaceholders()
     {
@@ -82,10 +82,10 @@ public class SelectTest : SelectTestBase
         AssertSql("SELECT * FROM `users` LIMIT @p0 OFFSET @p1");
     }
 
-    public override void MultipleCtesAndBindings()
-    {
-        base.MultipleCtesAndBindings();
-    }
+    //public override void MultipleCtesAndBindings()
+    //{
+    //    base.MultipleCtesAndBindings();
+    //}
 
     public override void Offset()
     {

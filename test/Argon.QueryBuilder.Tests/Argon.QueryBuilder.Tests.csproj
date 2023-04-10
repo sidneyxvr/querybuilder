@@ -13,7 +13,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Argon.QueryBuilder.MySql\Argon.QueryBuilder.MySql.csproj" />
-    <ProjectReference Include="..\Argon.QueryBuilder\Argon.QueryBuilder.csproj" />
+    <ProjectReference Include="..\..\src\Argon.QueryBuilder.MySql\Argon.QueryBuilder.MySql.csproj" />
+    <ProjectReference Include="..\..\src\Argon.QueryBuilder\Argon.QueryBuilder.csproj" />
   </ItemGroup>
 </Project>

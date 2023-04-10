@@ -13,8 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Argon.QueryBuilder.MySql\Argon.QueryBuilder.MySql.csproj" />
-    <ProjectReference Include="..\Argon.QueryBuilder.Tests\Argon.QueryBuilder.Tests.csproj" />
+    <ProjectReference Include="..\src\Argon.QueryBuilder.MySql\Argon.QueryBuilder.MySql.csproj" />
   </ItemGroup>
 
 </Project>

@@ -20,7 +20,7 @@ public partial class Query
         {
             AddComponent(ComponentType.Select, new Column
             {
-                Table = table,
+                Schema = table,
                 Name = name,
                 Alias = alias
             });
@@ -77,23 +77,21 @@ public partial class Query
         return this;
     }
 
-    public Query SelectAggregate(string aggregate, string column, Func<Query, Query>? filter)
-        => filter is null
-        ? SelectAggregate(aggregate, column)
-        : SelectAggregate(aggregate, column, filter.Invoke(NewChild()));
+    private Query SelectAggregate(string aggregate, string column, Func<Query, Query>? filter)
+        => SelectAggregate(aggregate, column, filter?.Invoke(NewChild()));
 
-    public Query SelectSum(string column, Func<Query, Query>? filter = null)
-        => SelectAggregate("sum", column, filter);
+    public Query SelectSum(string column)
+        => SelectAggregate("sum", column);
 
-    public Query SelectCount(string column, Func<Query, Query>? filter = null)
-        => SelectAggregate("count", column, filter);
+    public Query SelectCount(string column)
+        => SelectAggregate("count", column);
 
-    public Query SelectAvg(string column, Func<Query, Query>? filter = null)
-        => SelectAggregate("avg", column, filter);
+    public Query SelectAvg(string column)
+        => SelectAggregate("avg", column);
 
-    public Query SelectMin(string column, Func<Query, Query>? filter = null)
-        => SelectAggregate("min", column, filter);
+    public Query SelectMin(string column)
+        => SelectAggregate("min", column);
 
-    public Query SelectMax(string column, Func<Query, Query>? filter = null)
-        => SelectAggregate("max", column, filter);
+    public Query SelectMax(string column)
+        => SelectAggregate("max", column);
 }

@@ -19,10 +19,15 @@ public abstract class TestBase
 
     protected void AssertSql(
         string sql,
+        (string, object)[]? parameters = null,
         [CallerMemberName] string testMethodName = "")
     {
         var query = _compiledQueries.GetValueOrDefault(testMethodName)!;
 
         Assert.Equal(sql, query.Sql);
+        if (parameters?.Any() == true)
+        {
+            Assert.Equal(parameters.ToArray(), query.Parameters.Select(p => (p.Key, p.Value)).ToArray());
+        }
     }
 }

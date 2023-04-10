@@ -17,7 +17,7 @@ public class Column : AbstractColumn
     /// The column name.
     /// </value>
     public required string Name { get; set; }
-    public string? Table { get; set; }
+    public string? Schema { get; set; }
     public string? Alias { get; set; }
     /// <inheritdoc />
     public override AbstractClause Clone()

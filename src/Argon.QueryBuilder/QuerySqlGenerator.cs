@@ -9,7 +9,7 @@ public interface IQuerySqlGenerator
     abstract static SqlResult Compile(Query query);
 }
 
-public class QuerySqlGenerator
+public abstract class QuerySqlGenerator
 {
     private static readonly Dictionary<string, MethodInfo> _methods = new();
 
@@ -315,9 +315,9 @@ public class QuerySqlGenerator
                 }
                 break;
             case Column column:
-                if (column.Table is not null)
+                if (column.Schema is not null)
                 {
-                    SqlBuilder.Append(WrapValue(column.Table))
+                    SqlBuilder.Append(WrapValue(column.Schema))
                         .Append('.');
                 }
 
@@ -907,7 +907,7 @@ public class QuerySqlGenerator
 
         if (x.IsNot)
         {
-            SqlBuilder.Append(") ");
+            SqlBuilder.Append(')');
         }
     }
 
