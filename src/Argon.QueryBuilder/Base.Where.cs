@@ -410,8 +410,12 @@ public abstract partial class BaseQuery<Q>
 
     public Q OrWhere(string column, string op, Query query)
         => Or().Where(column, op, query);
+
     public Q OrWhere(string column, string op, Func<Query, Query> callback)
-        => Or().Where(column, op, callback);
+    {
+        var childQuery = new Query().SetParent(this);
+        return Or().Where(column, op, callback.Invoke(childQuery));
+    }
 
     public Q WhereExists(Query query)
     {

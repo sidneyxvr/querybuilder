@@ -51,11 +51,6 @@ public class SelectTestBase : TestBase
         => AssertQuery(new Query("Phones")
             .Union(new Query("Laptops").Where("Type", "A")));
 
-    [Fact]
-    public virtual void CombineRawWithPlaceholders()
-        => AssertQuery(new Query("Mobiles")
-        .CombineRaw("UNION ALL SELECT * FROM {Devices}"));
-
     //[Fact]
     //public virtual void CteAndBindings()
     //    => AssertQuery(new Query("Races")

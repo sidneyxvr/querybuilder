@@ -19,20 +19,6 @@ public partial class Query
         });
     }
 
-    public Query CombineRaw(string sql, params object[] bindings)
-    {
-        if (Method != MethodType.Select)
-        {
-            throw new InvalidOperationException("Only select queries can be combined.");
-        }
-
-        return AddComponent(ComponentType.Union, new RawCombine
-        {
-            Expression = sql,
-            Bindings = bindings,
-        });
-    }
-
     public Query Union(Query query, bool all = false)
         => Combine("union", all, query);
 
@@ -63,9 +49,6 @@ public partial class Query
     public Query ExceptAll(Func<Query, Query> callback)
         => Except(callback, true);
 
-    public Query ExceptRaw(string sql, params object[] bindings)
-        => CombineRaw(sql, bindings);
-
     public Query Intersect(Query query, bool all = false)
         => Combine("intersect", all, query);
 
@@ -80,7 +63,4 @@ public partial class Query
 
     public Query IntersectAll(Func<Query, Query> callback)
         => Intersect(callback, true);
-
-    public Query IntersectRaw(string sql, params object[] bindings)
-        => CombineRaw(sql, bindings);
 }

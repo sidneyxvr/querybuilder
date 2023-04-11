@@ -96,16 +96,6 @@ public class WhereTestBase : TestBase
             => q.Where("name", "test")
             .OrWhere("description", "value")));
 
-
-    //[Fact]
-    //public virtual void WhereQueryCondition()
-    //    => AssertQuery(new Query("users")
-    //    .Where("id", "=", q
-    //        => q.From("friends")
-    //        .Select("id")
-    //        .Where("name", "test")
-    //        .Limit(1)));
-
     [Fact]
     public virtual void WhereQueryCondition()
         => AssertQuery(new Query("users")
@@ -114,7 +104,6 @@ public class WhereTestBase : TestBase
                 .Select("id")
                 .Where("name", "test")
                 .Limit(1)));
-
 
     [Fact]
     public virtual void WhereSubQuery()
@@ -179,10 +168,10 @@ public class WhereTestBase : TestBase
 
     [Fact]
     public virtual void WhereOrCalback()
-    => AssertQuery(new Query("users")
-    .Where(q => q.Where("id", 1)
-        .OrWhere(q => q.Where("name", "test")
-            .OrWhere("name", "value"))));
+        => AssertQuery(new Query("users")
+        .Where(q => q.Where("id", 1)
+            .OrWhere(q => q.Where("name", "test")
+                .OrWhere("name", "value"))));
 
     [Fact]
     public virtual void WhereOrNotCalback()
@@ -274,18 +263,18 @@ public class WhereTestBase : TestBase
 
     [Fact]
     public virtual void WhereNotBetween()
-=> AssertQuery(new Query("users")
-.WhereNotBetween("createdAt", DateTime.UtcNow.AddYears(-1), DateTime.UtcNow));
+        => AssertQuery(new Query("users")
+        .WhereNotBetween("createdAt", DateTime.UtcNow.AddYears(-1), DateTime.UtcNow));
 
     [Fact]
     public virtual void WhereOrBetween()
-=> AssertQuery(new Query("users")
-.Where("id", 1).OrWhereBetween("createdAt", DateTime.UtcNow.AddYears(-1), DateTime.UtcNow));
+        => AssertQuery(new Query("users")
+        .Where("id", 1).OrWhereBetween("createdAt", DateTime.UtcNow.AddYears(-1), DateTime.UtcNow));
 
     [Fact]
     public virtual void WhereOrNotBetween()
-=> AssertQuery(new Query("users")
-.Where("id", 1).OrWhereNotBetween("createdAt", DateTime.UtcNow.AddYears(-1), DateTime.UtcNow));
+        => AssertQuery(new Query("users")
+        .Where("id", 1).OrWhereNotBetween("createdAt", DateTime.UtcNow.AddYears(-1), DateTime.UtcNow));
 
     [Fact]
     public virtual void WhereOrIn()
@@ -341,6 +330,123 @@ public class WhereTestBase : TestBase
     public virtual void WhereCallback()
         => AssertQuery(new Query("users")
             .Where("id", "=", q => new Query("posts").Where("id", 1).Select("userId")));
+
+    [Fact]
+    public virtual void WhereInString()
+        => AssertQuery(new Query("users")
+            .WhereIn("name", "test"));
+
+    [Fact]
+    public virtual void WhereOrSub()
+        => AssertQuery(new Query("users")
+            .Where("id", 1)
+            .OrWhereSub(new Query("posts")
+                .Where("id", 1)
+                .Select("id"), 1));
+
+    [Fact]
+    public virtual void WhereOrSubOperation()
+      => AssertQuery(new Query("users")
+          .Where("id", 1).OrWhereSub(new Query("posts").Where("id", 1).Select("id"), "!=", 1));
+
+    [Fact]
+    public virtual void WhereOrColumnSub()
+        => AssertQuery(new Query("users")
+            .Where("name", "test").OrWhere("id", "=", new Query("posts").Where("id", 1).Select("userId")));
+
+    [Fact]
+    public virtual void WhereOrColumnCallback()
+        => AssertQuery(new Query("users")
+            .Where("name", "test").OrWhere("id", "=", q => new Query("posts").Where("id", 1).Select("userId")));
+
+    [Fact]
+    public virtual void WhereNotExistsQuery()
+        => AssertQuery(new Query("users as u")
+            .WhereNotExists(new Query("posts as p").WhereColumns("u.id", "=", "p.userId").Select("1")));
+
+    [Fact]
+    public virtual void WhereNotExistsCallback()
+        => AssertQuery(new Query("users as u")
+            .WhereNotExists(q => new Query("posts as p").WhereColumns("u.id", "=", "p.userId").Select("1")));
+
+    [Fact]
+    public virtual void WhereOrExistsQuery()
+        => AssertQuery(new Query("users as u")
+            .Where("name", "test").OrWhereExists(new Query("posts as p").WhereColumns("u.id", "=", "p.userId").Select("1")));
+
+    [Fact]
+    public virtual void WhereOrExistsCallback()
+        => AssertQuery(new Query("users as u")
+            .Where("name", "test").OrWhereExists(q => new Query("posts as p").WhereColumns("u.id", "=", "p.userId").Select("1")));
+
+    [Fact]
+    public virtual void WhereOrNotExistsQuery()
+        => AssertQuery(new Query("users as u")
+            .Where("name", "test").OrWhereNotExists(new Query("posts as p").WhereColumns("u.id", "=", "p.userId").Select("1")));
+
+    [Fact]
+    public virtual void WhereOrNotExistsCallback()
+        => AssertQuery(new Query("users as u")
+            .Where("name", "test").OrWhereNotExists(q => new Query("posts as p").WhereColumns("u.id", "=", "p.userId").Select("1")));
+
+    [Fact]
+    public virtual void WhereDatePart()
+        => AssertQuery(new Query("users")
+            .WhereDatePart("year", "createdAt", 2023));
+
+    [Fact]
+    public virtual void WhereDateNotPart()
+        => AssertQuery(new Query("users")
+            .WhereNotDatePart("year", "createdAt", 2023));
+
+    [Fact]
+    public virtual void WhereOrDatePart()
+    => AssertQuery(new Query("users")
+        .Where("id", 1).OrWhereDatePart("year", "createdAt", 2023));
+
+    [Fact]
+    public virtual void WhereOrNotDatePart()
+        => AssertQuery(new Query("users")
+            .Where("id", 1).OrWhereNotDatePart("year", "createdAt", 2023));
+
+    [Fact]
+    public virtual void WhereDate()
+        => AssertQuery(new Query("users")
+            .WhereDate("createdAt", DateTime.UtcNow));
+    [Fact]
+    public virtual void WhereNotDate()
+        => AssertQuery(new Query("users")
+            .WhereNotDate("createdAt", DateTime.UtcNow));
+
+    [Fact]
+    public virtual void WhereOrDate()
+        => AssertQuery(new Query("users")
+            .Where("id", 1).OrWhereDate("createdAt", DateTime.UtcNow));
+
+    [Fact]
+    public virtual void WhereOrNotDate()
+        => AssertQuery(new Query("users")
+            .Where("id", 1).OrWhereNotDate("createdAt", DateTime.UtcNow));
+
+    [Fact]
+    public virtual void WhereTime()
+        => AssertQuery(new Query("users")
+            .WhereTime("createdAt", DateTime.UtcNow));
+
+    [Fact]
+    public virtual void WhereNotTime()
+        => AssertQuery(new Query("users")
+            .WhereNotTime("createdAt", DateTime.UtcNow));
+
+    [Fact]
+    public virtual void WhereOrTime()
+        => AssertQuery(new Query("users")
+            .Where("id", 1).OrWhereTime("createdAt", DateTime.UtcNow));
+
+    [Fact]
+    public virtual void WhereOrNotTime()
+        => AssertQuery(new Query("users")
+            .Where("id", 1).OrWhereNotTime("createdAt", DateTime.UtcNow));
 }
 
 public class Test

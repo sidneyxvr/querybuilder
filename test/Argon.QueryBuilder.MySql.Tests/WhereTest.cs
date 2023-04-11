@@ -382,7 +382,6 @@ public class WhereTest : WhereTestBase
         base.WhereOrInCallback();
 
         AssertSql("SELECT * FROM `users` WHERE `name` = @p0 OR `id` IN (SELECT `userId` FROM `posts` WHERE `id` = @p1)");
-
     }
 
     public override void WhereNotInQuery()
@@ -425,5 +424,167 @@ public class WhereTest : WhereTestBase
         base.WhereCallback();
 
         AssertSql("SELECT * FROM `users` WHERE `id` = (SELECT `userId` FROM `posts` WHERE `id` = @p0)");
+    }
+
+    public override void WhereInString()
+    {
+        base.WhereInString();
+
+        AssertSql("SELECT * FROM `users` WHERE `name` IN (@p0)",
+            new (string, object)[] { ("@p0", "test") } );
+    }
+
+    public override void WhereOrSub()
+    {
+        base.WhereOrSub();
+
+        AssertSql("SELECT * FROM `users` WHERE `id` = @p0 OR (SELECT `id` FROM `posts` WHERE `id` = @p1) = @p2");
+    }
+
+    public override void WhereOrSubOperation()
+    {
+        base.WhereOrSubOperation();
+
+        AssertSql("SELECT * FROM `users` WHERE `id` = @p0 OR (SELECT `id` FROM `posts` WHERE `id` = @p1) != @p2");
+    }
+
+    public override void WhereOrColumnSub()
+    {
+        base.WhereOrColumnSub();
+
+        AssertSql("SELECT * FROM `users` WHERE `name` = @p0 OR `id` = (SELECT `userId` FROM `posts` WHERE `id` = @p1)");
+    }
+
+    public override void WhereOrColumnCallback()
+    {
+        base.WhereOrColumnCallback();
+
+        AssertSql("SELECT * FROM `users` WHERE `name` = @p0 OR `id` = (SELECT `userId` FROM `posts` WHERE `id` = @p1)");
+    }
+
+    public override void WhereNotExistsQuery()
+    {
+        base.WhereNotExistsQuery();
+
+        AssertSql("SELECT * FROM `users` AS `u` WHERE NOT EXISTS (SELECT 1 FROM `posts` AS `p` WHERE `u`.`id` = `p`.`userId`)");
+    }
+
+    public override void WhereNotExistsCallback()
+    {
+        base.WhereNotExistsCallback();
+
+        AssertSql("SELECT * FROM `users` AS `u` WHERE NOT EXISTS (SELECT 1 FROM `posts` AS `p` WHERE `u`.`id` = `p`.`userId`)");
+    }
+
+    public override void WhereOrExistsQuery()
+    {
+        base.WhereOrExistsQuery();
+
+        AssertSql("SELECT * FROM `users` AS `u` WHERE `name` = @p0 OR EXISTS (SELECT 1 FROM `posts` AS `p` WHERE `u`.`id` = `p`.`userId`)");
+    }
+
+    public override void WhereOrExistsCallback()
+    {
+        base.WhereOrExistsCallback();
+
+        AssertSql("SELECT * FROM `users` AS `u` WHERE `name` = @p0 OR EXISTS (SELECT 1 FROM `posts` AS `p` WHERE `u`.`id` = `p`.`userId`)");
+    }
+
+    public override void WhereOrNotExistsQuery()
+    {
+        base.WhereOrNotExistsQuery();
+        AssertSql("SELECT * FROM `users` AS `u` WHERE `name` = @p0 OR NOT EXISTS (SELECT 1 FROM `posts` AS `p` WHERE `u`.`id` = `p`.`userId`)");
+
+    }
+
+    public override void WhereOrNotExistsCallback()
+    {
+        base.WhereOrNotExistsCallback();
+
+        AssertSql("SELECT * FROM `users` AS `u` WHERE `name` = @p0 OR NOT EXISTS (SELECT 1 FROM `posts` AS `p` WHERE `u`.`id` = `p`.`userId`)");
+    }
+
+    public override void WhereDatePart()
+    {
+        base.WhereDatePart();
+
+        AssertSql("SELECT * FROM `users` WHERE YEAR(`createdAt`) = @p0");
+    }
+
+    public override void WhereDateNotPart()
+    {
+        base.WhereDateNotPart();
+
+        AssertSql("SELECT * FROM `users` WHERE NOT (YEAR(`createdAt`) = @p0)");
+    }
+
+    public override void WhereOrDatePart()
+    {
+        base.WhereOrDatePart();
+
+        AssertSql("SELECT * FROM `users` WHERE `id` = @p0 OR YEAR(`createdAt`) = @p1");
+    }
+
+    public override void WhereOrNotDatePart()
+    {
+        base.WhereOrNotDatePart();
+
+        AssertSql("SELECT * FROM `users` WHERE `id` = @p0 OR NOT (YEAR(`createdAt`) = @p1)");
+    }
+
+    public override void WhereDate()
+    {
+        base.WhereDate();
+
+        AssertSql("SELECT * FROM `users` WHERE DATE(`createdAt`) = @p0");
+    }
+
+    public override void WhereNotDate()
+    {
+        base.WhereNotDate();
+
+        AssertSql("SELECT * FROM `users` WHERE NOT (DATE(`createdAt`) = @p0)");
+    }
+
+    public override void WhereOrDate()
+    {
+        base.WhereOrDate();
+
+        AssertSql("SELECT * FROM `users` WHERE `id` = @p0 OR DATE(`createdAt`) = @p1");
+    }
+
+    public override void WhereOrNotDate()
+    {
+        base.WhereOrNotDate();
+
+        AssertSql("SELECT * FROM `users` WHERE `id` = @p0 OR NOT (DATE(`createdAt`) = @p1)");
+    }
+
+    public override void WhereTime()
+    {
+        base.WhereTime();
+
+        AssertSql("SELECT * FROM `users` WHERE TIME(`createdAt`) = @p0");
+    }
+
+    public override void WhereNotTime()
+    {
+        base.WhereNotTime();
+
+        AssertSql("SELECT * FROM `users` WHERE NOT (TIME(`createdAt`) = @p0)");
+    }
+
+    public override void WhereOrTime()
+    {
+        base.WhereOrTime();
+
+        AssertSql("SELECT * FROM `users` WHERE `id` = @p0 OR TIME(`createdAt`) = @p1");
+    }
+
+    public override void WhereOrNotTime()
+    {
+        base.WhereOrNotTime();
+
+        AssertSql("SELECT * FROM `users` WHERE `id` = @p0 OR NOT (TIME(`createdAt`) = @p1)");
     }
 }

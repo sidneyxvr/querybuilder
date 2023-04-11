@@ -855,8 +855,20 @@ public abstract class QuerySqlGenerator
         SqlBuilder.Append(Wrap(x.Column))
             .Append(' ')
             .Append(CheckOperator(x.Operator))
-            .Append(' ')
-            .Append(Parameter(x.Value));
+            .Append(' ');
+
+        if (x.Value is Query query)
+        {
+            SqlBuilder.Append('(');
+
+            VisitSelect(query);
+
+            SqlBuilder.Append(')');
+        }
+        else
+        {
+            SqlBuilder.Append(Parameter(x.Value));
+        }
     }
 
     protected virtual void VisitBasicStringCondition(BasicStringCondition x)
@@ -931,7 +943,7 @@ public abstract class QuerySqlGenerator
 
         if (x.IsNot)
         {
-            SqlBuilder.Append(") ");
+            SqlBuilder.Append(')');
         }
     }
 

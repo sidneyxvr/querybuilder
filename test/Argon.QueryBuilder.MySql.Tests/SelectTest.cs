@@ -49,11 +49,6 @@ public class SelectTest : SelectTestBase
     //    base.CascadedCteAndBindings();
     //}
 
-    public override void CombineRawWithPlaceholders()
-    {
-        base.CombineRawWithPlaceholders();
-    }
-
     public override void ExpandedSelect()
     {
         base.ExpandedSelect();
