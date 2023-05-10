@@ -387,7 +387,7 @@ public partial class Query
         // simplify the query as much as possible
         query = query.Clone();
         query.Columns.Clear();
-        query.SelectRaw("1")
+        query.SelectConstant(1)
             .Limit(1);
 
         return AddComponent(ComponentType.Having, new ExistsCondition

@@ -133,14 +133,6 @@ public partial class Query : BaseQuery<Query>
         return AddComponent(ComponentType.Cte, clause);
     }
 
-    public Query WithRaw(string alias, string sql, params object[] bindings)
-        => AddComponent(ComponentType.Cte, new RawFromClause
-        {
-            Alias = alias,
-            Expression = sql,
-            Bindings = bindings,
-        });
-
     public Query Limit(int value)
         => AddOrReplaceComponent<LimitClause>(ComponentType.Limit,
         new LimitClause
@@ -157,22 +149,6 @@ public partial class Query : BaseQuery<Query>
 
     public Query Offset(int value)
         => Offset((long)value);
-
-    /// <summary>
-    /// Alias for Limit
-    /// </summary>
-    /// <param name="limit"></param>
-    /// <returns></returns>
-    public Query Take(int limit)
-        => Limit(limit);
-
-    /// <summary>
-    /// Alias for Offset
-    /// </summary>
-    /// <param name="offset"></param>
-    /// <returns></returns>
-    public Query Skip(int offset)
-        => Offset(offset);
 
     public Query Distinct()
     {
@@ -239,14 +215,6 @@ public partial class Query : BaseQuery<Query>
         return this;
     }
 
-    public Query OrderByRaw(string expression, params object[] bindings)
-        => AddComponent(ComponentType.Order,
-            new RawOrderBy
-            {
-                Expression = expression,
-                Bindings = bindings // Helper.Flatten(bindings).ToArray()
-            });
-
     public Query OrderByRandom()
         => AddComponent(ComponentType.Order, new OrderByRandom { });
 
@@ -259,17 +227,6 @@ public partial class Query : BaseQuery<Query>
                 Name = column
             });
         }
-
-        return this;
-    }
-
-    public Query GroupByRaw(string expression, params object[] bindings)
-    {
-        AddComponent(ComponentType.Group, new RawColumn
-        {
-            Expression = expression,
-            Bindings = bindings,
-        });
 
         return this;
     }

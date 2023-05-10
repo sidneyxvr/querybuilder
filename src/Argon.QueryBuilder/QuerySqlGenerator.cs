@@ -269,9 +269,8 @@ public abstract class QuerySqlGenerator
 
         switch (columnClause)
         {
-            case RawColumn raw:
-                AddParameters(raw.Bindings);
-                SqlBuilder.Append(raw.Expression);
+            case ConstColumn constant:
+                SqlBuilder.Append(constant.Value);
                 break;
             case QueryColumn queryColumn:
                 SqlBuilder.Append('(');
@@ -321,7 +320,7 @@ public abstract class QuerySqlGenerator
                         .Append('.');
                 }
 
-                SqlBuilder.Append(WrapValue(column.Name));
+                SqlBuilder.Append(Wrap(column.Name));
                 if (column.Alias is not null)
                 {
                     SqlBuilder.Append(ColumnAsKeyword)
@@ -452,10 +451,6 @@ public abstract class QuerySqlGenerator
 
                     VisitSelect(combineClause.Query);
                     break;
-                case RawCombine rawCombine:
-                    AddParameters(rawCombine.Bindings);
-                    SqlBuilder.Append(' ').Append(rawCombine.Expression);
-                    break;
                 default:
                     throw new InvalidOperationException("TODO: ");
             }
@@ -466,10 +461,6 @@ public abstract class QuerySqlGenerator
     {
         switch (from)
         {
-            case RawFromClause raw:
-                AddParameters(raw.Bindings);
-                SqlBuilder.Append(raw.Expression);
-                break;
             case QueryFromClause queryFromClause:
                 var fromQuery = queryFromClause.Query;
 
@@ -564,9 +555,6 @@ public abstract class QuerySqlGenerator
     {
         switch (orderBy)
         {
-            case RawOrderBy raw:
-                SqlBuilder.Append(raw.Expression);
-                break;
             case OrderBy order:
                 SqlBuilder.Append(Wrap(order.Column));
                 if (!order.Ascending)
@@ -638,19 +626,11 @@ public abstract class QuerySqlGenerator
     /// <returns></returns>
     protected virtual string Wrap(string value)
     {
-        if (value.Contains(" as ", StringComparison.OrdinalIgnoreCase))
-        {
-            var (before, after) = SplitAlias(value);
-
-            return Wrap(before) + $" {ColumnAsKeyword}" + WrapValue(after!);
-        }
-
         if (value.Contains('.'))
         {
-            return string.Join('.', value.Split('.').Select((x, index) =>
-            {
-                return WrapValue(x);
-            }));
+            var splitedValue = value.Split('.');
+
+            return $"{WrapValue(splitedValue[0])}.{WrapValue(splitedValue[1])}";
         }
 
         // If we reach here then the value does not contain an "AS" alias
@@ -678,28 +658,9 @@ public abstract class QuerySqlGenerator
     /// <param name="value"></param>
     /// <returns></returns>
     protected virtual string WrapValue(string value)
-    {
-        if (value == "*") return value;
-
-        var opening = OpeningIdentifier;
-        var closing = ClosingIdentifier;
-
-        return opening + value.Replace(closing, closing + closing) + closing;
-    }
-
-    /// <summary>
-    /// Resolve a parameter
-    /// </summary>
-    /// <param name="ctx"></param>
-    /// <param name="parameter"></param>
-    /// <returns></returns>
-    protected virtual object Resolve(object parameter)
-        => parameter switch
-        {
-            UnsafeLiteral literal => literal.Value,
-            // Variable variable => query.FindVariable(variable.Name),
-            _ => parameter
-        };
+        => value == "*"
+        ? value
+        : $"{OpeningIdentifier}{value}{ClosingIdentifier}";
 
     /// <summary>
     /// Resolve a parameter and add it to the binding list
@@ -873,29 +834,20 @@ public abstract class QuerySqlGenerator
 
     protected virtual void VisitBasicStringCondition(BasicStringCondition x)
     {
-        if (Resolve(x.Value) is not string value)
-        {
-            throw new ArgumentException("Expecting a non nullable string");
-        }
-
+        var value = x.Value;
         var method = x.Operator;
 
         if (new[] { "starts", "ends", "contains", "like" }.Contains(x.Operator))
         {
             method = "LIKE";
 
-            switch (x.Operator)
+            value = x.Operator switch
             {
-                case "starts":
-                    value = $"{value}%";
-                    break;
-                case "ends":
-                    value = $"%{value}";
-                    break;
-                case "contains":
-                    value = $"%{value}%";
-                    break;
-            }
+                "starts" => $"{x.Value}%",
+                "ends" => $"%{x.Value}",
+                "contains" => $"%{x.Value}%",
+                _ => x.Value
+            };
         }
 
         if (x.IsNot)
@@ -1040,13 +992,12 @@ public abstract class QuerySqlGenerator
     {
         SqlBuilder.Append(item.IsNot ? "NOT EXISTS " : "EXISTS ");
 
-        // remove unneeded components
         var query = item.Query.Clone();
 
         if (OmitSelectInsideExists)
         {
             query.Columns.Clear();
-            query.SelectRaw("1");
+            query.SelectConstant(1);
         }
 
         SqlBuilder.Append('(');

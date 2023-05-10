@@ -18,11 +18,4 @@ public class LimitClause : AbstractClause
         _limit = 0;
         return this;
     }
-
-    /// <inheritdoc />
-    public override AbstractClause Clone()
-        => new LimitClause
-        {
-            Limit = Limit,
-        };
 }

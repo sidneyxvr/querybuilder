@@ -21,12 +21,4 @@ public class AggregateClause : AbstractClause
     /// The type of aggregate function, e.g. "MAX", "MIN", etc.
     /// </value>
     public required string Type { get; set; }
-
-    /// <inheritdoc />
-    public override AbstractClause Clone()
-        => new AggregateClause
-        {
-            Type = Type,
-            Columns = Columns,
-        };
 }

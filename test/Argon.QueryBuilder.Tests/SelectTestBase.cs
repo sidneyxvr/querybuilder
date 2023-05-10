@@ -187,13 +187,6 @@ public class SelectTestBase : TestBase
         .SelectSum("value AS Total"));
 
     [Fact]
-    public virtual void SelectRawWithBindings()
-        => AssertQuery(new Query()
-        .From("users")
-        .SelectRaw("id, ?, name", 1));
-
-
-    [Fact]
     public virtual void SelectWithAlias()
         => AssertQuery(new Query()
         .From("users")
@@ -203,14 +196,14 @@ public class SelectTestBase : TestBase
     public virtual void SelectQuery()
         => AssertQuery(new Query("users as u")
             .Select(new Query("posts as p")
-                .Where("p.userId", "u.id")
+                .WhereColumns("p.userId", "=", "u.id")
                 .Select("p.createdAt"), "lastPublishDate"));
 
     [Fact]
     public virtual void SelectQueryLambda()
         => AssertQuery(new Query("users as u")
             .Select(q => new Query("posts as p")
-                .Where("p.userId", "u.id")
+                .WhereColumns("p.userId", "=", "u.id")
                 .Select("p.createdAt"), "lastPublishDate"));
 
     [Fact]
@@ -220,6 +213,10 @@ public class SelectTestBase : TestBase
     [Fact]
     public virtual void SelectEnumerable()
         => AssertQuery(new Query("users").Select(new[] { "id", "name" }));
+
+    [Fact]
+    public virtual void SelectConst()
+        => AssertQuery(new Query("users").SelectConstant(1));
 
     [Fact]
     public virtual void SelectSum()

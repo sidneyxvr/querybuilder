@@ -226,13 +226,6 @@ public abstract partial class BaseQuery<Q> : AbstractQuery where Q : BaseQuery<Q
         });
     }
 
-    public Q FromRaw(string sql, params object[] bindings)
-        => AddOrReplaceComponent<RawFromClause>(ComponentType.From, new RawFromClause
-        {
-            Expression = sql,
-            Bindings = bindings,
-        });
-
     public Q From(Func<Query, Query> callback, string? alias = null)
     {
         var query = new Query();

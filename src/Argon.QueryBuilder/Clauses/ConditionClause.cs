@@ -14,17 +14,6 @@ public class BasicCondition : AbstractCondition
     public required string Column { get; set; }
     public required string Operator { get; set; }
     public virtual required object Value { get; set; }
-
-    /// <inheritdoc />
-    public override AbstractClause Clone()
-        => new BasicCondition
-        {
-            Column = Column,
-            Operator = Operator,
-            Value = Value,
-            IsOr = IsOr,
-            IsNot = IsNot,
-        };
 }
 
 public class BasicStringCondition : BasicCondition
@@ -42,34 +31,11 @@ public class BasicStringCondition : BasicCondition
             _escapeCharacter = value;
         }
     }
-    /// <inheritdoc />
-    public override AbstractClause Clone()
-        => new BasicStringCondition
-        {
-            Column = Column,
-            Operator = Operator,
-            Value = Value,
-            IsOr = IsOr,
-            IsNot = IsNot,
-            EscapeCharacter = EscapeCharacter,
-        };
 }
 
 public class BasicDateCondition : BasicCondition
 {
     public required string Part { get; set; }
-
-    /// <inheritdoc />
-    public override AbstractClause Clone()
-    => new BasicDateCondition
-    {
-        Column = Column,
-        Operator = Operator,
-        Value = Value,
-        IsOr = IsOr,
-        IsNot = IsNot,
-        Part = Part,
-    };
 }
 
 /// <summary>
@@ -80,17 +46,6 @@ public class TwoColumnsCondition : AbstractCondition
     public required string First { get; set; }
     public required string Operator { get; set; }
     public required string Second { get; set; }
-
-    /// <inheritdoc />
-    public override AbstractClause Clone()
-        => new TwoColumnsCondition
-        {
-            First = First,
-            Operator = Operator,
-            Second = Second,
-            IsOr = IsOr,
-            IsNot = IsNot,
-        };
 }
 
 /// <summary>
@@ -101,17 +56,6 @@ public class QueryCondition<T> : AbstractCondition where T : BaseQuery<T>
     public required string Column { get; set; }
     public required string Operator { get; set; }
     public required Query Query { get; set; }
-
-    /// <inheritdoc />
-    public override AbstractClause Clone()
-        => new QueryCondition<T>
-        {
-            Column = Column,
-            Operator = Operator,
-            Query = Query.Clone(),
-            IsOr = IsOr,
-            IsNot = IsNot,
-        };
 }
 
 /// <summary>
@@ -122,17 +66,6 @@ public class SubQueryCondition<T> : AbstractCondition where T : BaseQuery<T>
     public required object Value { get; set; }
     public required string Operator { get; set; }
     public required Query Query { get; set; }
-
-    /// <inheritdoc />
-    public override AbstractClause Clone()
-    => new SubQueryCondition<T>
-    {
-        Value = Value,
-        Operator = Operator,
-        Query = Query.Clone(),
-        IsOr = IsOr,
-        IsNot = IsNot,
-    };
 }
 
 /// <summary>
@@ -142,14 +75,6 @@ public class InCondition<T> : AbstractCondition
 {
     public required string Column { get; set; }
     public required IEnumerable<T> Values { get; set; }
-    public override AbstractClause Clone()
-        => new InCondition<T>
-        {
-            Column = Column,
-            Values = new List<T>(Values),
-            IsOr = IsOr,
-            IsNot = IsNot,
-        };
 }
 
 /// <summary>
@@ -159,14 +84,6 @@ public class InQueryCondition : AbstractCondition
 {
     public required Query Query { get; set; }
     public required string Column { get; set; }
-    public override AbstractClause Clone()
-        => new InQueryCondition
-        {
-            Column = Column,
-            Query = Query.Clone(),
-            IsOr = IsOr,
-            IsNot = IsNot,
-        };
 }
 
 /// <summary>
@@ -178,15 +95,6 @@ public class BetweenCondition<T> : AbstractCondition
     public required string Column { get; set; }
     public required T Higher { get; set; }
     public required T Lower { get; set; }
-    public override AbstractClause Clone()
-        => new BetweenCondition<T>
-        {
-            Column = Column,
-            Higher = Higher,
-            Lower = Lower,
-            IsOr = IsOr,
-            IsNot = IsNot,
-        };
 }
 
 /// <summary>
@@ -195,15 +103,6 @@ public class BetweenCondition<T> : AbstractCondition
 public class NullCondition : AbstractCondition
 {
     public required string Column { get; set; }
-
-    /// <inheritdoc />
-    public override AbstractClause Clone()
-        => new NullCondition
-        {
-            Column = Column,
-            IsOr = IsOr,
-            IsNot = IsNot,
-        };
 }
 
 /// <summary>
@@ -213,16 +112,6 @@ public class BooleanCondition : AbstractCondition
 {
     public required string Column { get; set; }
     public required bool Value { get; set; }
-
-    /// <inheritdoc />
-    public override AbstractClause Clone()
-        => new BooleanCondition
-        {
-            Column = Column,
-            IsOr = IsOr,
-            IsNot = IsNot,
-            Value = Value
-        };
 }
 
 /// <summary>
@@ -232,13 +121,6 @@ public class BooleanCondition : AbstractCondition
 public class NestedCondition<T> : AbstractCondition where T : BaseQuery<T>
 {
     public required T Query { get; set; }
-    public override AbstractClause Clone()
-        => new NestedCondition<T>
-        {
-            Query = Query.Clone(),
-            IsOr = IsOr,
-            IsNot = IsNot,
-        };
 }
 
 /// <summary>
@@ -247,13 +129,4 @@ public class NestedCondition<T> : AbstractCondition where T : BaseQuery<T>
 public class ExistsCondition : AbstractCondition
 {
     public required Query Query { get; set; }
-
-    /// <inheritdoc />
-    public override AbstractClause Clone()
-        => new ExistsCondition
-        {
-            Query = Query.Clone(),
-            IsOr = IsOr,
-            IsNot = IsNot,
-        };
 }

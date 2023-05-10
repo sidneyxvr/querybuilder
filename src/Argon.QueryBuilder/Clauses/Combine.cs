@@ -30,26 +30,4 @@ public class Combine : AbstractCombine
     ///   <c>true</c> if all; otherwise, <c>false</c>.
     /// </value>
     public bool All { get; set; }
-
-    public override AbstractClause Clone()
-        => new Combine
-        {
-            Operation = Operation,
-            Query = Query,
-            All = All
-        };
-}
-
-public class RawCombine : AbstractCombine
-{
-    public required string Expression { get; set; }
-
-    public required object[] Bindings { get; set; }
-
-    public override AbstractClause Clone()
-        => new RawCombine
-        {
-            Expression = Expression,
-            Bindings = Bindings
-        };
 }

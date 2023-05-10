@@ -9,11 +9,4 @@ public class OffsetClause : AbstractClause
         get => _offset;
         set => _offset = value > 0 ? value : _offset;
     }
-
-    /// <inheritdoc />
-    public override AbstractClause Clone()
-        => new OffsetClause
-        {
-            Offset = Offset,
-        };
 }

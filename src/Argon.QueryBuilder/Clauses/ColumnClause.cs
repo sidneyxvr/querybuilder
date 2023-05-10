@@ -19,13 +19,6 @@ public class Column : AbstractColumn
     public required string Name { get; set; }
     public string? Schema { get; set; }
     public string? Alias { get; set; }
-    /// <inheritdoc />
-    public override AbstractClause Clone()
-        => new Column
-        {
-            Name = Name,
-            Alias = Alias,
-        };
 }
 
 /// <summary>
@@ -41,31 +34,17 @@ public class QueryColumn : AbstractColumn
     /// The query for column value calculation.
     /// </value>
     public required Query Query { get; set; }
-    public override AbstractClause Clone()
-        => new QueryColumn
-        {
-            Query = Query.Clone(),
-        };
 }
 
-public class RawColumn : AbstractColumn
+public class ConstColumn : AbstractColumn
 {
     /// <summary>
-    /// Gets or sets the RAW expression.
+    /// Gets or sets the Const expression.
     /// </summary>
     /// <value>
-    /// The RAW expression.
+    /// The Const expression.
     /// </value>
-    public required string Expression { get; set; }
-    public required object[] Bindings { set; get; }
-
-    /// <inheritdoc />
-    public override AbstractClause Clone()
-        => new RawColumn
-        {
-            Expression = Expression,
-            Bindings = Bindings,
-        };
+    public required object Value { get; set; }
 }
 
 /// <summary>
@@ -84,11 +63,4 @@ public class AggregatedColumn : AbstractColumn
     public Query? Filter { get; set; }
     public required string Aggregate { get; set; }
     public required Column Column { get; set; }
-    public override AbstractClause Clone()
-        => new AggregatedColumn
-        {
-            Filter = Filter?.Clone(),
-            Column = (Column)Column.Clone(),
-            Aggregate = Aggregate,
-        };
 }

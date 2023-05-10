@@ -33,14 +33,13 @@ public partial class Query
     /// Add a new "raw" select expression to the query.
     /// </summary>
     /// <returns></returns>
-    public Query SelectRaw(string sql, params object[] bindings)
+    public Query SelectConstant(object value)
     {
         Method = MethodType.Select;
 
-        AddComponent(ComponentType.Select, new RawColumn
+        AddComponent(ComponentType.Select, new ConstColumn
         {
-            Expression = sql,
-            Bindings = bindings,
+            Value = value
         });
 
         return this;

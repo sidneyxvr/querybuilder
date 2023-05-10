@@ -116,4 +116,67 @@ public class SelectTest : SelectTestBase
 
         AssertSql("SELECT `id` AS Id, `name` AS Name FROM `users`");
     }
+
+    public override void SelectQuery()
+    {
+        base.SelectQuery();
+
+        AssertSql("SELECT (SELECT `p`.`createdAt` FROM `posts` AS `p` WHERE `p`.`userId` = `u`.`id`) AS `lastPublishDate` FROM `users` AS `u`");
+    }
+
+    public override void SelectQueryLambda()
+    {
+        base.SelectQueryLambda();
+
+        AssertSql("SELECT (SELECT `p`.`createdAt` FROM `posts` AS `p` WHERE `p`.`userId` = `u`.`id`) AS `lastPublishDate` FROM `users` AS `u`");
+    }
+
+    public override void SelectParams()
+    {
+        base.SelectParams();
+
+        AssertSql("SELECT `id`, `name` FROM `users`");
+    }
+
+    public override void SelectEnumerable()
+    {
+        base.SelectEnumerable();
+
+        AssertSql("SELECT `id`, `name` FROM `users`");
+    }
+
+    public override void SelectConst()
+    {
+        base.SelectConst();
+
+        AssertSql("SELECT 1 FROM `users`");
+    }
+
+    public override void SelectCount()
+    {
+        base.SelectCount();
+
+        AssertSql("SELECT COUNT(`id`) FROM `users`");
+    }
+
+    public override void SelectAvg()
+    {
+        base.SelectAvg();
+
+        AssertSql("SELECT AVG(`id`) FROM `users`");
+    }
+
+    public override void SelectMin()
+    {
+        base.SelectMin();
+
+        AssertSql("SELECT MIN(`id`) FROM `users`");
+    }
+
+    public override void SelectMax()
+    {
+        base.SelectMax();
+
+        AssertSql("SELECT MAX(`id`) FROM `users`");
+    }
 }
